@@ -64,9 +64,14 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, password, displayName);
-      toast.success('Account created successfully!');
-      router.push('/feed');
+      const response = await register(email, password, displayName);
+      if (response.requiresVerification) {
+        toast.success('Registration successful! Please check your email to verify your account.');
+        router.push('/login?message=verify');
+      } else {
+        toast.success('Account created successfully!');
+        router.push('/feed');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     } finally {

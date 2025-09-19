@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const { login, user } = useAuth();
   const router = useRouter();
+  const { message } = router.query;
 
   // Redirect if already logged in
   useEffect(() => {
@@ -20,6 +21,13 @@ export default function LoginPage() {
       router.push('/feed');
     }
   }, [user, router]);
+
+  // Show verification message if redirected from registration
+  useEffect(() => {
+    if (message === 'verify') {
+      toast.success('Please check your email to verify your account before logging in.');
+    }
+  }, [message]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -53,7 +61,26 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       router.push('/feed');
     } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      const errorMessage = error.message || 'Login failed';
+      toast.error(errorMessage);
+      
+      // If it's a verification error, show link to resend verification
+      if (errorMessage.includes('verify your email')) {
+        setTimeout(() => {
+          toast((t) => (
+            <div>
+              <p className="text-sm">{errorMessage}</p>
+              <a
+                href="/resend-verification"
+                className="text-primary-600 hover:text-primary-500 text-sm font-medium"
+                onClick={() => toast.dismiss(t.id)}
+              >
+                Resend verification email
+              </a>
+            </div>
+          ), { duration: 8000 });
+        }, 500);
+      }
     } finally {
       setLoading(false);
     }
@@ -93,6 +120,14 @@ export default function LoginPage() {
               className="font-medium text-primary-600 hover:text-primary-500"
             >
               Forgot your password?
+            </a>
+          </div>
+          <div className="text-sm">
+            <a
+              href="/resend-verification"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Resend verification
             </a>
           </div>
         </div>

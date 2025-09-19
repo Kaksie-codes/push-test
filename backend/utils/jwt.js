@@ -24,8 +24,27 @@ const verifyResetToken = (token) => {
   }
 };
 
+// Generate email verification token
+const generateEmailVerificationToken = () => {
+  return jwt.sign({ purpose: 'email-verification' }, process.env.JWT_SECRET, {
+    expiresIn: '24h' // Verification token expires in 24 hours
+  });
+};
+
+// Verify email verification token
+const verifyEmailVerificationToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded.purpose === 'email-verification';
+  } catch (error) {
+    return false;
+  }
+};
+
 module.exports = {
   generateToken,
   generateResetToken,
-  verifyResetToken
+  verifyResetToken,
+  generateEmailVerificationToken,
+  verifyEmailVerificationToken
 };

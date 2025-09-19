@@ -71,7 +71,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const register = async (email: string, password: string, displayName: string) => {
     try {
       const response = await authAPI.register({ email, password, displayName });
-      setUser(response.data.user);
+      // Only set user if registration is complete (no verification required)
+      if (response.data.user) {
+        setUser(response.data.user);
+      }
+      return response.data; // Return response data for checking requiresVerification
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Registration failed');
     }
