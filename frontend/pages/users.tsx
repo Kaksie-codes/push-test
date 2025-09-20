@@ -289,12 +289,12 @@ export default function UsersPage() {
                       onClick={() => router.push(`/users/${user._id}`)}
                       variant="secondary"
                       size="sm"
-                      className="flex-1 group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-200 transition-colors"
+                      className="flex-1 flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-200 transition-colors"
                     >
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      Profile
+                      <span className="truncate">Profile</span>
                     </Button>
                     
                     {/* Only show follow/unfollow buttons if not viewing own profile */}
@@ -306,36 +306,46 @@ export default function UsersPage() {
                             disabled={followingUsers.has(user._id)}
                             variant="secondary"
                             size="sm"
-                            className="px-4 text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
+                            className="px-3 flex items-center justify-center text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50 min-w-[90px]"
                           >
                             {followingUsers.has(user._id) ? (
-                              <svg className="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
+                              <>
+                                <svg className="w-4 h-4 mr-1.5 animate-spin flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span className="truncate">Loading</span>
+                              </>
                             ) : (
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
-                              </svg>
+                              <>
+                                <svg className="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                                </svg>
+                                <span className="truncate">Unfollow</span>
+                              </>
                             )}
-                            {followingUsers.has(user._id) ? 'Loading...' : 'Unfollow'}
                           </Button>
                         ) : (
                           <Button
                             onClick={() => handleFollow(user._id)}
                             disabled={followingUsers.has(user._id)}
                             size="sm"
-                            className="px-4 bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="px-3 flex items-center justify-center bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 min-w-[90px]"
                           >
                             {followingUsers.has(user._id) ? (
-                              <svg className="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
+                              <>
+                                <svg className="w-4 h-4 mr-1.5 animate-spin flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span className="truncate">Loading</span>
+                              </>
                             ) : (
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                              </svg>
+                              <>
+                                <svg className="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                                <span className="truncate">Follow</span>
+                              </>
                             )}
-                            {followingUsers.has(user._id) ? 'Loading...' : 'Follow'}
                           </Button>
                         )}
                       </>
