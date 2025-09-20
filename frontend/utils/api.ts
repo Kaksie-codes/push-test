@@ -72,6 +72,9 @@ export const authAPI = {
 
 // Users API
 export const usersAPI = {
+  getAllUsers: (limit = 50, page = 1) =>
+    api.get('/users/all', { params: { limit, page } }),
+    
   getProfile: (id: string) =>
     api.get(`/users/${id}`),
   

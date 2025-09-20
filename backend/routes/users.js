@@ -5,6 +5,68 @@ const { authMiddleware, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get all users (for users directory page)
+router.get('/all', optionalAuth, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
+    
+    console.log('Getting all users with limit:', limit, 'page:', page);
+    
+    // Get all users, sorted by join date (newest first)
+    const allUsers = await User.find({})
+      .select('displayName email avatarUrl bio followers following createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    console.log('Found users:', allUsers.length);
+
+    // Map users and add computed fields
+    const users = allUsers.map(user => {
+      const userObj = {
+        _id: user._id,
+        displayName: user.displayName,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        followerCount: user.followers ? user.followers.length : 0,
+        followingCount: user.following ? user.following.length : 0,
+        createdAt: user.createdAt,
+        isFollowing: false // Default to false
+      };
+
+      // Add following status if user is authenticated
+      if (req.user && req.user.following) {
+        userObj.isFollowing = req.user.following.some(followedId => 
+          followedId.toString() === user._id.toString()
+        );
+      }
+
+      return userObj;
+    });
+
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments({});
+    
+    console.log('Returning users data');
+    
+    res.json({ 
+      users,
+      pagination: {
+        page,
+        limit,
+        total: totalUsers,
+        totalPages: Math.ceil(totalUsers / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Get suggested users (users not followed by current user)
 router.get('/suggested', authMiddleware, async (req, res) => {
   try {

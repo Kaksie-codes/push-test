@@ -24,8 +24,11 @@ export const Layout = ({ children }: LayoutProps) => {
     if (path === '/feed') {
       return router.pathname === '/feed';
     }
+    if (path === '/users') {
+      return router.pathname === '/users';
+    }
     if (path.startsWith('/users/')) {
-      return router.pathname.startsWith('/users/');
+      return router.pathname.startsWith('/users/') && router.pathname !== '/users';
     }
     return false;
   };
@@ -59,6 +62,9 @@ export const Layout = ({ children }: LayoutProps) => {
               <nav className="flex items-center space-x-4">
                 <a href="/feed" className={getNavLinkClasses('/feed')}>
                   Feed
+                </a>
+                <a href="/users" className={getNavLinkClasses('/users')}>
+                  Users
                 </a>
                 <a href={`/users/${user.id}`} className={getNavLinkClasses(`/users/${user.id}`)}>
                   Profile
