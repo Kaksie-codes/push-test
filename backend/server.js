@@ -131,6 +131,75 @@ app.post('/api/debug/test-push', async (req, res) => {
   }
 });
 
+// Debug endpoint to cleanup expired push subscriptions
+app.post('/api/debug/cleanup-subscriptions', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const pushService = require('./services/pushService');
+    
+    console.log('Starting push subscription cleanup...');
+    
+    const users = await User.find({});
+    let totalRemoved = 0;
+    const results = [];
+
+    for (const user of users) {
+      if (!user.devices || user.devices.length === 0) continue;
+
+      const validDevices = [];
+      const removedDevices = [];
+
+      // Test each device subscription
+      for (const device of user.devices) {
+        const testPayload = {
+          title: 'Cleanup Test',
+          body: 'Testing subscription validity',
+          icon: '/icon-192x192.png'
+        };
+
+        const result = await pushService.sendToDevice(device, testPayload);
+        
+        if (result.success) {
+          validDevices.push(device);
+        } else {
+          removedDevices.push({
+            deviceId: device.deviceId,
+            error: result.error || result.reason
+          });
+          totalRemoved++;
+        }
+      }
+
+      // Update user with only valid devices
+      if (removedDevices.length > 0) {
+        user.devices = validDevices;
+        await user.save();
+        
+        results.push({
+          userId: user._id,
+          displayName: user.displayName,
+          removedCount: removedDevices.length,
+          validCount: validDevices.length,
+          removedDevices
+        });
+
+        console.log(`Cleaned up ${removedDevices.length} expired subscriptions for ${user.displayName}`);
+      }
+    }
+
+    res.json({
+      message: 'Subscription cleanup completed',
+      totalRemovedSubscriptions: totalRemoved,
+      affectedUsers: results.length,
+      results
+    });
+
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
