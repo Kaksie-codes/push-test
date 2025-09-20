@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Post = require('../models/Post');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { createNotification } = require('./notifications');
+const pushService = require('../services/pushService');
 
 const router = express.Router();
 
@@ -299,6 +300,43 @@ router.post('/:id/follow', authMiddleware, async (req, res) => {
         currentUserId,
         'User'
       );
+
+      // Send push notification to the followed user
+      try {
+        const pushPayload = {
+          title: 'New Follower',
+          body: `${currentUser.displayName} started following you`,
+          icon: currentUser.avatarUrl || '/icon-192x192.png',
+          badge: '/badge-72x72.png',
+          data: {
+            type: 'follow',
+            followerId: currentUserId.toString(),
+            url: `/users/${currentUserId}`
+          },
+          actions: [
+            {
+              action: 'view',
+              title: 'View Profile'
+            },
+            {
+              action: 'dismiss',
+              title: 'Dismiss'
+            }
+          ]
+        };
+
+        const pushResult = await pushService.sendToUser(userToFollow, pushPayload, {
+          urgency: 'normal',
+          ttl: 86400 // 24 hours
+        });
+
+        if (pushResult.success) {
+          console.log(`Push notification sent for new follower: ${currentUser.displayName} → ${userToFollow.displayName}`);
+        }
+      } catch (pushError) {
+        console.error('Failed to send push notification for follow:', pushError);
+        // Don't fail the follow operation if push notification fails
+      }
     } catch (notificationError) {
       console.error('Failed to create follow notification:', notificationError);
       // Don't fail the follow operation if notification creation fails

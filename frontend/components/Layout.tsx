@@ -67,6 +67,14 @@ export const Layout = ({ children }: LayoutProps) => {
     }
   };
 
+  const handleLogoClick = () => {
+    if (user) {
+      router.push('/feed');
+    } else {
+      router.push('/login');
+    }
+  };
+
   // Function to check if a path is active
   const isActivePath = (path: string) => {
     if (path === '/feed') {
@@ -103,7 +111,10 @@ export const Layout = ({ children }: LayoutProps) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 
+                className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors duration-200"
+                onClick={handleLogoClick}
+              >
                 SocialApp
               </h1>
             </div>

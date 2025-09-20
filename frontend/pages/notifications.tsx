@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui';
+import PushNotificationSettings from '../components/PushNotificationSettings';
 import { notificationsAPI } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -42,6 +43,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingAsRead, setMarkingAsRead] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'notifications' | 'settings'>('notifications');
   const router = useRouter();
   const { user } = useAuth();
 
@@ -208,11 +210,13 @@ export default function NotificationsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
             <p className="text-sm text-gray-600 mt-1">
-              {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All caught up!'}
+              {activeTab === 'notifications' && unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 
+               activeTab === 'notifications' ? 'All caught up!' : 
+               'Manage your push notification preferences'}
             </p>
           </div>
           
-          {unreadCount > 0 && (
+          {activeTab === 'notifications' && unreadCount > 0 && (
             <Button
               onClick={markAllAsRead}
               variant="secondary"
@@ -223,8 +227,42 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {/* Notifications List */}
-        {loading ? (
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'notifications'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Notifications
+              {unreadCount > 0 && (
+                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'settings'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Push Settings
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'notifications' ? (
+          <>
+            {/* Notifications List */}
+            {loading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, index) => (
               <div key={index} className="bg-white rounded-lg shadow p-4 animate-pulse">
@@ -315,6 +353,13 @@ export default function NotificationsPage() {
               </div>
             ))}
           </div>
+        )}
+          </>
+        ) : (
+          <>
+            {/* Push Notification Settings */}
+            <PushNotificationSettings />
+          </>
         )}
       </div>
     </Layout>
