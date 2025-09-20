@@ -57,6 +57,36 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
+// Debug endpoint to check notification settings
+app.get('/api/debug/notification-settings', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const users = await User.find({}, 'displayName email notificationSettings followers following devices');
+    
+    const report = users.map(user => ({
+      id: user._id,
+      displayName: user.displayName,
+      email: user.email,
+      hasNotificationSettings: !!user.notificationSettings,
+      notificationSettings: user.notificationSettings,
+      followersCount: user.followers ? user.followers.length : 0,
+      followingCount: user.following ? user.following.length : 0,
+      devicesCount: user.devices ? user.devices.length : 0,
+      enabledDevicesCount: user.devices ? user.devices.filter(d => d.enabled).length : 0
+    }));
+
+    res.json({
+      totalUsers: users.length,
+      usersWithSettings: users.filter(u => u.notificationSettings).length,
+      usersWithPostNotifications: users.filter(u => u.notificationSettings?.postsFromFollowed).length,
+      users: report
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
