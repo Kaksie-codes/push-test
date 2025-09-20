@@ -5,6 +5,41 @@ const { authMiddleware, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get suggested users (users not followed by current user)
+router.get('/suggested', authMiddleware, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const currentUser = await User.findById(req.user._id);
+    
+    // Get users that current user is not following and exclude current user
+    const suggestedUsers = await User.find({
+      _id: { 
+        $ne: req.user._id, // Exclude current user
+        $nin: currentUser.following // Exclude users already followed
+      }
+    })
+    .select('displayName email avatarUrl bio followerCount followingCount createdAt')
+    .sort({ followerCount: -1, createdAt: -1 }) // Sort by popularity and recency
+    .limit(limit);
+
+    const users = suggestedUsers.map(user => ({
+      _id: user._id,
+      displayName: user.displayName,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      followerCount: user.followerCount,
+      followingCount: user.followingCount,
+      createdAt: user.createdAt
+    }));
+
+    res.json({ users });
+  } catch (error) {
+    console.error('Get suggested users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get user profile by ID
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
@@ -283,6 +318,41 @@ router.get('/:id/following', optionalAuth, async (req, res) => {
     res.json({ following: followingWithStatus });
   } catch (error) {
     console.error('Get following error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get suggested users (users not followed by current user)
+router.get('/suggested', authMiddleware, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const currentUser = await User.findById(req.user._id);
+    
+    // Get users that current user is not following and exclude current user
+    const suggestedUsers = await User.find({
+      _id: { 
+        $ne: req.user._id, // Exclude current user
+        $nin: currentUser.following // Exclude users already followed
+      }
+    })
+    .select('displayName email avatarUrl bio followerCount followingCount createdAt')
+    .sort({ followerCount: -1, createdAt: -1 }) // Sort by popularity and recency
+    .limit(limit);
+
+    const users = suggestedUsers.map(user => ({
+      _id: user._id,
+      displayName: user.displayName,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      followerCount: user.followerCount,
+      followingCount: user.followingCount,
+      createdAt: user.createdAt
+    }));
+
+    res.json({ users });
+  } catch (error) {
+    console.error('Get suggested users error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

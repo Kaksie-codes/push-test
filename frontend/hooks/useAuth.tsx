@@ -16,11 +16,17 @@ interface User {
   createdAt: string;
 }
 
+interface RegisterResponse {
+  user?: User;
+  requiresVerification?: boolean;
+  message?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
+  register: (email: string, password: string, displayName: string) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -45,14 +51,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Check if user is logged in on app start
   useEffect(() => {
-    checkAuth();
-  }, []);
+    // Only check auth on initial load, not on every render
+    if (loading) {
+      checkAuth();
+    }
+  }, []); // Remove loading dependency to prevent loops
 
   const checkAuth = async () => {
     try {
       const response = await authAPI.getCurrentUser();
       setUser(response.data.user);
     } catch (error) {
+      // Silently fail - user is just not authenticated
       setUser(null);
     } finally {
       setLoading(false);
@@ -68,7 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const register = async (email: string, password: string, displayName: string) => {
+  const register = async (email: string, password: string, displayName: string): Promise<RegisterResponse> => {
     try {
       const response = await authAPI.register({ email, password, displayName });
       // Only set user if registration is complete (no verification required)

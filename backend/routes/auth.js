@@ -267,14 +267,26 @@ router.post('/verify-email', [
 
     const { token } = req.body;
 
+    // Clean token - remove URL tracking parameters and URL encoding artifacts
+    let cleanToken = token;
+    
+    // Remove Gmail tracking parameters
+    if (cleanToken.includes('&source=gmail')) {
+      cleanToken = cleanToken.split('&source=gmail')[0];
+    }
+    
+    // Remove URL encoding artifacts that might be added
+    cleanToken = cleanToken.replace(/^3D/, ''); // Remove URL-encoded '=' at start
+    cleanToken = decodeURIComponent(cleanToken); // Decode any URL encoding
+    
     // Verify token format
-    if (!verifyEmailVerificationToken(token)) {
+    if (!verifyEmailVerificationToken(cleanToken)) {
       return res.status(400).json({ message: 'Invalid or expired verification token' });
     }
 
     // Find user with this token
     const user = await User.findOne({
-      emailVerificationToken: token,
+      emailVerificationToken: cleanToken,
       emailVerificationExpires: { $gt: Date.now() }
     });
 

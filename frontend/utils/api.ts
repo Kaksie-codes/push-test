@@ -28,9 +28,15 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Redirect to login on unauthorized
+      // Only redirect to login if we're not already on an auth page
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        const currentPath = window.location.pathname;
+        const authPages = ['/login', '/register', '/verify-email', '/resend-verification'];
+        
+        // Don't redirect if we're already on an auth page
+        if (!authPages.includes(currentPath)) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
@@ -80,6 +86,9 @@ export const usersAPI = {
   
   searchUsers: (query: string, limit = 20) =>
     api.get(`/users/search/${encodeURIComponent(query)}`, { params: { limit } }),
+  
+  getSuggested: (limit = 10) =>
+    api.get('/users/suggested', { params: { limit } }),
   
   getFollowers: (id: string) =>
     api.get(`/users/${id}/followers`),

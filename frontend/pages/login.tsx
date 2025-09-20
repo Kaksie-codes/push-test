@@ -11,16 +11,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  const { login, user } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { message } = router.query;
 
-  // Redirect if already logged in
+  // Redirect if already logged in (but wait for auth to finish loading)
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       router.push('/feed');
     }
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   // Show verification message if redirected from registration
   useEffect(() => {

@@ -22,7 +22,20 @@ export default function VerifyEmailPage() {
   const verifyEmail = async (verificationToken: string) => {
     try {
       setLoading(true);
-      await authAPI.verifyEmail(verificationToken);
+      
+      // Clean token - remove URL tracking parameters and URL encoding artifacts
+      let cleanToken = verificationToken;
+      
+      // Remove Gmail tracking parameters
+      if (cleanToken.includes('&source=gmail')) {
+        cleanToken = cleanToken.split('&source=gmail')[0];
+      }
+      
+      // Remove URL encoding artifacts that might be added
+      cleanToken = cleanToken.replace(/^3D/, ''); // Remove URL-encoded '=' at start
+      cleanToken = decodeURIComponent(cleanToken); // Decode any URL encoding
+      
+      await authAPI.verifyEmail(cleanToken);
       setVerified(true);
       toast.success('Email verified successfully!');
     } catch (error: any) {

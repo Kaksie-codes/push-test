@@ -16,15 +16,15 @@ export default function RegisterPage() {
     displayName?: string; 
   }>({});
 
-  const { register, user } = useAuth();
+  const { register, user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Redirect if already logged in
+  // Redirect if already logged in (but wait for auth to finish loading)
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       router.push('/feed');
     }
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   const validateForm = () => {
     const newErrors: { 
@@ -65,7 +65,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const response = await register(email, password, displayName);
-      if (response.requiresVerification) {
+      if (response?.requiresVerification) {
         toast.success('Registration successful! Please check your email to verify your account.');
         router.push('/login?message=verify');
       } else {
