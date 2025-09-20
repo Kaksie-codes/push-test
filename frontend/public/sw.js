@@ -5,12 +5,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-comp
 
 // Firebase configuration
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDRQ5v3s6JCjQ1gCgQ9R6eGfX1W5jjbOYo",
-  authDomain: "social-app-6a82f.firebaseapp.com",
-  projectId: "social-app-6a82f",
-  storageBucket: "social-app-6a82f.firebasestorage.app",
-  messagingSenderId: "1075325806896",
-  appId: "1:1075325806896:web:7e3b76b6b6e6d4e1b7a8f1"
+  apiKey: "AIzaSyCve9w8m0FCGZhLhXnPHNyBUuLOoPfQHcw",
+  authDomain: "push-notifications-test-1317a.firebaseapp.com",
+  projectId: "push-notifications-test-1317a",
+  storageBucket: "push-notifications-test-1317a.firebasestorage.app",
+  messagingSenderId: "225573471934",
+  appId: "1:225573471934:web:30796e972a6c97b37000ef"
 };
 
 let messaging = null;
