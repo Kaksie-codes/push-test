@@ -1,17 +1,33 @@
 const webpush = require('web-push');
 const admin = require('../config/firebase');
 
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
-
 class HybridPushService {
   constructor() {
     this.isFirebaseInitialized = false;
+    this.isWebPushInitialized = false;
     this.initializeFirebase();
+    this.initializeWebPush();
+  }
+
+  // Initialize Web Push VAPID configuration
+  initializeWebPush() {
+    try {
+      if (process.env.VAPID_SUBJECT && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+        webpush.setVapidDetails(
+          process.env.VAPID_SUBJECT,
+          process.env.VAPID_PUBLIC_KEY,
+          process.env.VAPID_PRIVATE_KEY
+        );
+        this.isWebPushInitialized = true;
+        console.log('Web Push VAPID configuration initialized');
+      } else {
+        console.warn('Web Push VAPID keys not found. Web Push notifications will be disabled.');
+        this.isWebPushInitialized = false;
+      }
+    } catch (error) {
+      console.error('Web Push VAPID configuration failed:', error.message);
+      this.isWebPushInitialized = false;
+    }
   }
 
   initializeFirebase() {
@@ -29,7 +45,7 @@ class HybridPushService {
 
   // Determine the best push method for a device
   getBestPushMethod(device) {
-    if (device.pushMethod === 'web-push' && device.webPushSubscription) {
+    if (device.pushMethod === 'web-push' && device.webPushSubscription && this.isWebPushInitialized) {
       return 'web-push';
     }
     
@@ -39,9 +55,9 @@ class HybridPushService {
 
     // Auto-selection logic
     if (device.pushMethod === 'auto') {
-      // Prefer native Web Push for desktop browsers
-      if (device.platform === 'web' || device.platform === 'mac') {
-        if (device.webPushSubscription) {
+      // Prefer native Web Push for desktop browsers (if available)
+      if (device.platform === 'web' || device.platform === 'mac' || device.platform === 'windows') {
+        if (device.webPushSubscription && this.isWebPushInitialized) {
           return 'web-push';
         }
       }
@@ -52,7 +68,7 @@ class HybridPushService {
       }
 
       // Fallback to Web Push if available
-      if (device.webPushSubscription) {
+      if (device.webPushSubscription && this.isWebPushInitialized) {
         return 'web-push';
       }
     }
@@ -63,6 +79,10 @@ class HybridPushService {
   // Send push notification via native Web Push API
   async sendWebPush(subscription, payload, options = {}) {
     try {
+      if (!this.isWebPushInitialized) {
+        throw new Error('Web Push VAPID not initialized');
+      }
+
       const webPushOptions = {
         TTL: options.ttl || 86400, // 24 hours
         urgency: options.urgency || 'normal',
