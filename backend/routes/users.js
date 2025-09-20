@@ -85,11 +85,26 @@ router.get('/:id', optionalAuth, async (req, res) => {
 router.put('/profile', authMiddleware, [
   body('displayName').optional().trim().isLength({ min: 2 }).withMessage('Display name must be at least 2 characters'),
   body('bio').optional().trim().isLength({ max: 160 }).withMessage('Bio must be 160 characters or less'),
-  body('avatarUrl').optional().isURL().withMessage('Avatar URL must be valid'),
+  body('avatarUrl').optional().custom((value) => {
+    // Allow empty string or valid URL (including Cloudinary URLs)
+    if (value === '' || value === null || value === undefined) {
+      return true;
+    }
+    // More flexible URL validation for Cloudinary URLs
+    if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
+      return true;
+    }
+    throw new Error('Avatar URL must be a valid URL or empty');
+  }),
 ], async (req, res) => {
   try {
+    console.log('🔄 Profile update request received');
+    console.log('📝 Request body:', req.body);
+    console.log('👤 User ID:', req.user._id);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed', 
         errors: errors.array() 
@@ -105,11 +120,31 @@ router.put('/profile', authMiddleware, [
     if (bio !== undefined) updateData.bio = bio;
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
 
+    console.log('📊 Update data prepared:', updateData);
+
     const user = await User.findByIdAndUpdate(
       userId,
       updateData,
       { new: true, runValidators: true }
     ).select('-passwordHash -passwordResetToken -passwordResetExpires -devices');
+
+    console.log('✅ User updated successfully');
+    console.log('👤 Updated user data:', {
+      id: user._id,
+      email: user.email,
+      displayName: user.displayName,
+      bio: user.bio,
+      avatarUrl: user.avatarUrl
+    });
+
+    // Double-check by fetching the user again from database
+    const verifyUser = await User.findById(userId).select('avatarUrl displayName bio');
+    console.log('🔍 Verification - user in database:', {
+      id: verifyUser._id,
+      displayName: verifyUser.displayName,
+      bio: verifyUser.bio,
+      avatarUrl: verifyUser.avatarUrl
+    });
 
     const userResponse = {
       id: user._id,

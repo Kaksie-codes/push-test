@@ -130,7 +130,10 @@ export default function UserProfilePage() {
     e.preventDefault();
     
     try {
+      console.log('🔄 Updating profile with data:', editForm);
       const response = await usersAPI.updateProfile(editForm);
+      console.log('✅ Profile update response:', response.data);
+      
       setProfileUser({
         ...profileUser!,
         displayName: editForm.displayName,
@@ -140,6 +143,7 @@ export default function UserProfilePage() {
       setEditing(false);
       toast.success('Profile updated successfully!');
     } catch (error: any) {
+      console.error('❌ Profile update error:', error);
       toast.error(error.response?.data?.message || 'Failed to update profile');
     }
   };

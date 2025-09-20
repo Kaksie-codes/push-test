@@ -50,6 +50,7 @@ export const ImageUpload = ({
       console.log('📋 Upload Response:', result);
       
       onImageUploaded(result.secure_url);
+      console.log('📤 Calling onImageUploaded with:', result.secure_url);
       toast.success('Image uploaded successfully!');
     } catch (error: any) {
       console.error('Upload error:', error);
