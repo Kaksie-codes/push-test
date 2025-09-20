@@ -57,21 +57,18 @@ router.post('/', authMiddleware, [
     // Create notifications for followers
     try {
       const author = await User.findById(authorId);
-      if (author.followers && author.followers.length > 0) {
-        // Get all followers with their device information and notification preferences
-        const followers = await User.find({
-          _id: { $in: author.followers }
-        });
+      
+      // Find users who follow this author (users who have this author in their following list)
+      const followers = await User.find({
+        following: authorId,  // Users who are following this author
+        'notificationSettings.postsFromFollowed': true  // And want post notifications
+      });
 
-        // Filter followers who want post notifications
-        const followersWantingNotifications = followers.filter(
-          follower => follower.notificationSettings.postsFromFollowed
-        );
+      console.log(`Post created by ${author.displayName}: Found ${followers.length} followers who want notifications`);
 
-        console.log(`Post created by ${author.displayName}: ${followers.length} followers, ${followersWantingNotifications.length} want notifications`);
-
-        // Create in-app notifications for followers who want them
-        const notificationPromises = followersWantingNotifications.map(follower =>
+      if (followers.length > 0) {
+        // Create in-app notifications for followers
+        const notificationPromises = followers.map(follower =>
           createNotification(
             follower._id,
             authorId,
@@ -87,8 +84,8 @@ router.post('/', authMiddleware, [
         
         await Promise.allSettled(notificationPromises);
 
-        // Send push notifications to followers who want them
-        if (followersWantingNotifications.length > 0) {
+        // Send push notifications to followers
+        if (followers.length > 0) {
           try {
             const pushPayload = {
               title: `New post from ${author.displayName}`,
@@ -113,8 +110,8 @@ router.post('/', authMiddleware, [
               ]
             };
 
-            // Send push notifications to followers who want post notifications
-            const pushResult = await pushService.sendToUsers(followersWantingNotifications, pushPayload, {
+            // Send push notifications to all followers who want post notifications
+            const pushResult = await pushService.sendToUsers(followers, pushPayload, {
               urgency: 'normal',
               ttl: 86400 // 24 hours
             });
