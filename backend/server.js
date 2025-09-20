@@ -87,6 +87,50 @@ app.get('/api/debug/notification-settings', async (req, res) => {
   }
 });
 
+// Debug endpoint to test push notifications
+app.post('/api/debug/test-push', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const pushService = require('./services/pushService');
+    
+    // Get all users
+    const users = await User.find({});
+    console.log(`Testing push notifications for ${users.length} users`);
+    
+    const testPayload = {
+      title: 'Test Notification',
+      body: 'This is a test push notification to verify the system is working',
+      icon: '/icon-192x192.png',
+      badge: '/badge-72x72.png',
+      data: {
+        type: 'test',
+        url: '/notifications'
+      }
+    };
+
+    const results = [];
+    for (const user of users) {
+      if (user.devices && user.devices.length > 0) {
+        console.log(`Sending test notification to ${user.displayName}`);
+        const result = await pushService.sendToUser(user, testPayload);
+        results.push({
+          userId: user._id,
+          displayName: user.displayName,
+          result
+        });
+      }
+    }
+
+    res.json({
+      message: 'Test notifications sent',
+      results
+    });
+  } catch (error) {
+    console.error('Test push error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
