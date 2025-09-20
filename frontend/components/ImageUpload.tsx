@@ -9,7 +9,7 @@ interface ImageUploadProps {
   onImageRemoved?: () => void;
   className?: string;
 }
-
+// sss
 export const ImageUpload = ({ 
   currentImageUrl, 
   onImageUploaded, 
