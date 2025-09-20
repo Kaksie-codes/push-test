@@ -58,63 +58,74 @@ router.post('/', authMiddleware, [
     try {
       const author = await User.findById(authorId);
       if (author.followers && author.followers.length > 0) {
-        // Get all followers with their device information
+        // Get all followers with their device information and notification preferences
         const followers = await User.find({
           _id: { $in: author.followers }
         });
 
-        // Create in-app notifications for all followers
-        const notificationPromises = author.followers.map(followerId =>
+        // Filter followers who want post notifications
+        const followersWantingNotifications = followers.filter(
+          follower => follower.notificationSettings.postsFromFollowed
+        );
+
+        console.log(`Post created by ${author.displayName}: ${followers.length} followers, ${followersWantingNotifications.length} want notifications`);
+
+        // Create in-app notifications for followers who want them
+        const notificationPromises = followersWantingNotifications.map(follower =>
           createNotification(
-            followerId,
+            follower._id,
             authorId,
             'new_post',
             `${author.displayName} posted: "${text.length > 50 ? text.substring(0, 50) + '...' : text}"`,
             post._id,
             'Post'
           ).catch(err => {
-            console.error(`Failed to create notification for follower ${followerId}:`, err);
+            console.error(`Failed to create notification for follower ${follower._id}:`, err);
             return null; // Continue with other notifications even if one fails
           })
         );
         
         await Promise.allSettled(notificationPromises);
 
-        // Send push notifications to followers
-        try {
-          const pushPayload = {
-            title: `New post from ${author.displayName}`,
-            body: text.length > 100 ? text.substring(0, 100) + '...' : text,
-            icon: author.avatarUrl || '/icon-192x192.png',
-            badge: '/badge-72x72.png',
-            data: {
-              type: 'new_post',
-              postId: post._id.toString(),
-              authorId: authorId.toString(),
-              url: `/feed`
-            },
-            actions: [
-              {
-                action: 'view',
-                title: 'View Post'
+        // Send push notifications to followers who want them
+        if (followersWantingNotifications.length > 0) {
+          try {
+            const pushPayload = {
+              title: `New post from ${author.displayName}`,
+              body: text.length > 100 ? text.substring(0, 100) + '...' : text,
+              icon: author.avatarUrl || '/icon-192x192.png',
+              badge: '/badge-72x72.png',
+              data: {
+                type: 'new_post',
+                postId: post._id.toString(),
+                authorId: authorId.toString(),
+                url: `/feed`
               },
-              {
-                action: 'dismiss',
-                title: 'Dismiss'
-              }
-            ]
-          };
+              actions: [
+                {
+                  action: 'view',
+                  title: 'View Post'
+                },
+                {
+                  action: 'dismiss',
+                  title: 'Dismiss'
+                }
+              ]
+            };
 
-          // Send push notifications to all followers
-          const pushResult = await pushService.sendToUsers(followers, pushPayload, {
-            urgency: 'normal',
-            ttl: 86400 // 24 hours
-          });
+            // Send push notifications to followers who want post notifications
+            const pushResult = await pushService.sendToUsers(followersWantingNotifications, pushPayload, {
+              urgency: 'normal',
+              ttl: 86400 // 24 hours
+            });
 
-          console.log(`Push notifications sent for new post: ${pushResult.summary.successful}/${pushResult.totalUsers} successful`);
-        } catch (pushError) {
-          console.error('Failed to send push notifications for post:', pushError);
-          // Don't fail the post creation if push notifications fail
+            console.log(`Push notifications sent for new post: ${pushResult.summary.successful}/${pushResult.totalUsers} successful`);
+          } catch (pushError) {
+            console.error('Failed to send push notifications for post:', pushError);
+            // Don't fail the post creation if push notifications fail
+          }
+        } else {
+          console.log('No followers want post notifications');
         }
       }
     } catch (notificationError) {
