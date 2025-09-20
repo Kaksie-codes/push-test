@@ -85,8 +85,8 @@ class HybridPushService {
 
       const webPushOptions = {
         TTL: options.ttl || 86400, // 24 hours
-        urgency: options.urgency || 'normal',
-        ...options
+        urgency: options.urgency || 'normal'
+        // Remove ...options to avoid passing invalid options
       };
 
       const result = await webpush.sendNotification(subscription, payload, webPushOptions);

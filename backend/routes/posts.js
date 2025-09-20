@@ -60,11 +60,16 @@ router.post('/', authMiddleware, [
       
       // Find users who follow this author (users who have this author in their following list)
       const followers = await User.find({
+        _id: { $ne: authorId }, // Exclude the author themselves
         following: authorId,  // Users who are following this author
         'notificationSettings.postsFromFollowed': true  // And want post notifications
       });
 
-      console.log(`Post created by ${author.displayName}: Found ${followers.length} followers who want notifications`);
+      console.log(`Post created by ${author.displayName} (ID: ${authorId})`);
+      console.log(`Found ${followers.length} followers who want notifications:`);
+      followers.forEach(follower => {
+        console.log(`- ${follower.displayName} (ID: ${follower._id})`);
+      });
 
       if (followers.length > 0) {
         // Create in-app notifications for followers
