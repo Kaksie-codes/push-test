@@ -113,14 +113,14 @@ class PushNotificationManager {
         throw new Error('Service Worker not supported');
       }
 
-      console.log('Registering service worker...');
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Firebase will automatically register the service worker...');
       
+      // Firebase automatically registers /firebase-messaging-sw.js
+      // We just need to ensure the service worker is ready
       await navigator.serviceWorker.ready;
-      this.serviceWorker = registration;
       
-      console.log('Service worker registered successfully');
-      return registration;
+      console.log('Service worker registration ready');
+      return true;
     } catch (error) {
       console.error('Service worker registration failed:', error);
       throw error;
@@ -136,6 +136,7 @@ class PushNotificationManager {
 
       console.log('Getting FCM token...');
       
+      // Firebase will automatically use /firebase-messaging-sw.js
       const token = await getToken(this.messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
       });
