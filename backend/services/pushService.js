@@ -43,34 +43,16 @@ class HybridPushService {
     }
   }
 
-  // Determine the best push method for a device
+  // Determine the best push method for a device - Always use FCM
   getBestPushMethod(device) {
-    if (device.pushMethod === 'web-push' && device.webPushSubscription && this.isWebPushInitialized) {
-      return 'web-push';
-    }
-    
-    if (device.pushMethod === 'fcm' && device.fcmToken && this.isFirebaseInitialized) {
+    // Always prefer FCM if available
+    if (device.fcmToken && this.isFirebaseInitialized) {
       return 'fcm';
     }
 
-    // Auto-selection logic
-    if (device.pushMethod === 'auto') {
-      // Prefer native Web Push for desktop browsers (if available)
-      if (device.platform === 'web' || device.platform === 'mac' || device.platform === 'windows') {
-        if (device.webPushSubscription && this.isWebPushInitialized) {
-          return 'web-push';
-        }
-      }
-      
-      // Use FCM for iOS Safari or when Web Push is not available
-      if (device.fcmToken && this.isFirebaseInitialized) {
-        return 'fcm';
-      }
-
-      // Fallback to Web Push if available
-      if (device.webPushSubscription && this.isWebPushInitialized) {
-        return 'web-push';
-      }
+    // Only fall back to Web Push if FCM is not available (rare case)
+    if (device.webPushSubscription && this.isWebPushInitialized) {
+      return 'web-push';
     }
 
     return null;
