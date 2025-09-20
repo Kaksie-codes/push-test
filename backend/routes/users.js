@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Post = require('../models/Post');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { createNotification } = require('./notifications');
-const pushService = require('../services/pushService');
+const pushService = require('../services/fcmPushService');
 
 const router = express.Router();
 

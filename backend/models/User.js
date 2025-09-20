@@ -17,21 +17,10 @@ const deviceSchema = new mongoose.Schema({
     enum: ['chrome', 'firefox', 'safari', 'edge', 'other'],
     default: 'other'
   },
-  // For native Web Push API
-  webPushSubscription: {
-    endpoint: String,
-    keys: {
-      p256dh: String,
-      auth: String
-    }
-  },
-  // For Firebase Cloud Messaging
-  fcmToken: String,
-  // Push notification method preference
-  pushMethod: {
+  // Firebase Cloud Messaging token
+  fcmToken: {
     type: String,
-    enum: ['web-push', 'fcm', 'auto'],
-    default: 'auto'
+    required: true
   },
   lastActiveAt: {
     type: Date,

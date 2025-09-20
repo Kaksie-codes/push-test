@@ -7,10 +7,8 @@ interface Device {
   deviceId: string;
   platform: string;
   browser: string;
-  pushMethod: string;
   lastActiveAt: string;
   enabled: boolean;
-  hasWebPush: boolean;
   hasFCM: boolean;
 }
 
@@ -36,7 +34,7 @@ const PushNotificationSettings = () => {
   }, []);
 
   const checkSupport = () => {
-    const supported = pushManager.checkSupport();
+    const supported = pushManager.isSupported;
     setIsSupported(supported);
     if (!supported) {
       setError('Push notifications are not supported in this browser');
@@ -143,14 +141,14 @@ const PushNotificationSettings = () => {
     if (!environment) return 'auto';
     
     if (environment.platform === 'ios' && environment.browser === 'safari') {
-      return 'FCM (recommended for iOS Safari)';
+      return 'FCM (optimized for iOS Safari)';
     }
     
-    if (environment.platform === 'web' || environment.platform === 'mac') {
-      return 'Native Web Push (recommended for desktop)';
+    if (environment.platform === 'android') {
+      return 'FCM (native Android support)';
     }
     
-    return 'Auto-select best method';
+    return 'Firebase Cloud Messaging (FCM)';
   };
 
   if (!isSupported) {
@@ -282,12 +280,9 @@ const PushNotificationSettings = () => {
                       {getBrowserIcon(device.browser)} {device.browser} on {device.platform}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {device.pushMethod} • Last active: {new Date(device.lastActiveAt).toLocaleDateString()}
+                      Last active: {new Date(device.lastActiveAt).toLocaleDateString()}
                     </p>
                     <div className="flex items-center space-x-2 mt-1">
-                      {device.hasWebPush && (
-                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Web Push</span>
-                      )}
                       {device.hasFCM && (
                         <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">FCM</span>
                       )}
@@ -318,15 +313,15 @@ const PushNotificationSettings = () => {
         <ul className="space-y-2 text-sm text-blue-800">
           <li className="flex items-start space-x-2">
             <span className="text-blue-600">•</span>
-            <span>We use a hybrid approach for maximum compatibility across all devices</span>
+            <span>Uses Firebase Cloud Messaging (FCM) for reliable cross-platform notifications</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-blue-600">•</span>
-            <span>Desktop browsers use native Web Push API for better performance</span>
+            <span>Works on all modern browsers including mobile Safari and Chrome</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-blue-600">•</span>
-            <span>iOS Safari uses Firebase Cloud Messaging for enhanced compatibility</span>
+            <span>Optimized for mobile devices with proper notification display</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-blue-600">•</span>

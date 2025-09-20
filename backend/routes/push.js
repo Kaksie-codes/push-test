@@ -30,9 +30,7 @@ router.post('/subscribe', authMiddleware, async (req, res) => {
   try {
     const { 
       deviceId, 
-      webPushSubscription, 
       fcmToken, 
-      pushMethod = 'auto',
       deviceInfo 
     } = req.body;
 
@@ -41,9 +39,9 @@ router.post('/subscribe', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Device ID is required' });
     }
 
-    if (!webPushSubscription && !fcmToken) {
+    if (!fcmToken) {
       return res.status(400).json({ 
-        error: 'Either webPushSubscription or fcmToken is required' 
+        error: 'FCM token is required' 
       });
     }
 
@@ -75,9 +73,7 @@ router.post('/subscribe', authMiddleware, async (req, res) => {
       deviceId,
       platform,
       browser,
-      webPushSubscription: webPushSubscription || undefined,
-      fcmToken: fcmToken || undefined,
-      pushMethod,
+      fcmToken,
       lastActiveAt: new Date(),
       enabled: true
     };
@@ -151,10 +147,8 @@ router.get('/devices', authMiddleware, async (req, res) => {
       deviceId: device.deviceId,
       platform: device.platform,
       browser: device.browser,
-      pushMethod: device.pushMethod,
       lastActiveAt: device.lastActiveAt,
       enabled: device.enabled,
-      hasWebPush: !!device.webPushSubscription,
       hasFCM: !!device.fcmToken
     }));
 
@@ -168,11 +162,45 @@ router.get('/devices', authMiddleware, async (req, res) => {
   }
 });
 
+// Check subscription status for a device
+router.get('/status', authMiddleware, async (req, res) => {
+  try {
+    const { deviceId } = req.query;
+
+    if (!deviceId) {
+      return res.status(400).json({ error: 'Device ID is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find device
+    const device = user.devices.find(d => d.deviceId === deviceId);
+    
+    res.json({
+      subscribed: !!device && device.enabled && !!device.fcmToken,
+      device: device ? {
+        deviceId: device.deviceId,
+        platform: device.platform,
+        browser: device.browser,
+        enabled: device.enabled,
+        lastActiveAt: device.lastActiveAt
+      } : null
+    });
+
+  } catch (error) {
+    console.error('Check status error:', error);
+    res.status(500).json({ error: 'Failed to check subscription status' });
+  }
+});
+
 // Update device settings
 router.patch('/devices/:deviceId', authMiddleware, async (req, res) => {
   try {
     const { deviceId } = req.params;
-    const { enabled, pushMethod } = req.body;
+    const { enabled } = req.body;
 
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -189,10 +217,6 @@ router.patch('/devices/:deviceId', authMiddleware, async (req, res) => {
       device.enabled = enabled;
     }
 
-    if (pushMethod && ['web-push', 'fcm', 'auto'].includes(pushMethod)) {
-      device.pushMethod = pushMethod;
-    }
-
     device.lastActiveAt = new Date();
     await user.save();
 
@@ -200,8 +224,7 @@ router.patch('/devices/:deviceId', authMiddleware, async (req, res) => {
       message: 'Device settings updated successfully',
       device: {
         deviceId: device.deviceId,
-        enabled: device.enabled,
-        pushMethod: device.pushMethod
+        enabled: device.enabled
       }
     });
 

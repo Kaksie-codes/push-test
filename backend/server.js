@@ -99,15 +99,15 @@ app.get('/api/debug/notification-settings', async (req, res) => {
 app.post('/api/debug/test-push', async (req, res) => {
   try {
     const User = require('./models/User');
-    const pushService = require('./services/pushService');
+    const pushService = require('./services/fcmPushService');
     
     // Get all users
     const users = await User.find({});
-    console.log(`Testing push notifications for ${users.length} users`);
+    console.log(`Testing FCM push notifications for ${users.length} users`);
     
     const testPayload = {
       title: 'Test Notification',
-      body: 'This is a test push notification to verify the system is working',
+      body: 'This is a test FCM push notification to verify the system is working',
       icon: '/icon-192x192.png',
       badge: '/badge-72x72.png',
       data: {
@@ -119,7 +119,7 @@ app.post('/api/debug/test-push', async (req, res) => {
     const results = [];
     for (const user of users) {
       if (user.devices && user.devices.length > 0) {
-        console.log(`Sending test notification to ${user.displayName}`);
+        console.log(`Sending test FCM notification to ${user.displayName}`);
         const result = await pushService.sendToUser(user, testPayload);
         results.push({
           userId: user._id,
@@ -130,11 +130,11 @@ app.post('/api/debug/test-push', async (req, res) => {
     }
 
     res.json({
-      message: 'Test notifications sent',
+      message: 'FCM test notifications sent',
       results
     });
   } catch (error) {
-    console.error('Test push error:', error);
+    console.error('Test FCM push error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -143,9 +143,9 @@ app.post('/api/debug/test-push', async (req, res) => {
 app.post('/api/debug/cleanup-subscriptions', async (req, res) => {
   try {
     const User = require('./models/User');
-    const pushService = require('./services/pushService');
+    const pushService = require('./services/fcmPushService');
     
-    console.log('Starting push subscription cleanup...');
+    console.log('Starting FCM subscription cleanup...');
     
     const users = await User.find({});
     let totalRemoved = 0;
@@ -159,9 +159,18 @@ app.post('/api/debug/cleanup-subscriptions', async (req, res) => {
 
       // Test each device subscription
       for (const device of user.devices) {
+        if (!device.fcmToken) {
+          removedDevices.push({
+            deviceId: device.deviceId,
+            error: 'No FCM token'
+          });
+          totalRemoved++;
+          continue;
+        }
+
         const testPayload = {
           title: 'Cleanup Test',
-          body: 'Testing subscription validity',
+          body: 'Testing FCM subscription validity',
           icon: '/icon-192x192.png'
         };
 
@@ -191,19 +200,19 @@ app.post('/api/debug/cleanup-subscriptions', async (req, res) => {
           removedDevices
         });
 
-        console.log(`Cleaned up ${removedDevices.length} expired subscriptions for ${user.displayName}`);
+        console.log(`Cleaned up ${removedDevices.length} expired FCM subscriptions for ${user.displayName}`);
       }
     }
 
     res.json({
-      message: 'Subscription cleanup completed',
+      message: 'FCM subscription cleanup completed',
       totalRemovedSubscriptions: totalRemoved,
       affectedUsers: results.length,
       results
     });
 
   } catch (error) {
-    console.error('Cleanup error:', error);
+    console.error('FCM cleanup error:', error);
     res.status(500).json({ error: error.message });
   }
 });
