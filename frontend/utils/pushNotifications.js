@@ -243,18 +243,16 @@ class PushNotificationManager {
 
       const subscriptionData = await this.initializeSubscription();
       
-      const token = this.getFromStorage('token');
-      if (!token) {
-        throw new Error('User not authenticated');
-      }
+      // Since we're using cookie-based authentication (withCredentials: true),
+      // we don't need to get a token from localStorage
+      // The authentication cookie will be automatically included
 
       const response = await fetch(this.apiBaseUrl + '/push/subscribe', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
+        credentials: 'include', // Include authentication cookies
         body: JSON.stringify(subscriptionData)
       });
 
@@ -283,18 +281,12 @@ class PushNotificationManager {
     try {
       console.log('Unsubscribing from FCM push notifications...');
 
-      const token = this.getFromStorage('token');
-      if (!token) {
-        throw new Error('User not authenticated');
-      }
-
       const response = await fetch(this.apiBaseUrl + '/push/unsubscribe', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
+        credentials: 'include', // Include authentication cookies
         body: JSON.stringify({
           deviceId: this.deviceId
         })
@@ -330,16 +322,8 @@ class PushNotificationManager {
         return true;
       }
 
-      const token = this.getFromStorage('token');
-      if (!token) {
-        return false;
-      }
-
       const response = await fetch(this.apiBaseUrl + '/push/status?deviceId=' + this.deviceId, {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        },
-        credentials: 'include'
+        credentials: 'include' // Include authentication cookies
       });
 
       if (response.ok) {
@@ -360,16 +344,8 @@ class PushNotificationManager {
 
   async getDevices() {
     try {
-      const token = this.getFromStorage('token');
-      if (!token) {
-        throw new Error('User not authenticated');
-      }
-
       const response = await fetch(this.apiBaseUrl + '/push/devices', {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        },
-        credentials: 'include'
+        credentials: 'include' // Include authentication cookies
       });
 
       if (!response.ok) {
@@ -386,18 +362,12 @@ class PushNotificationManager {
 
   async updateDeviceSettings(settings) {
     try {
-      const token = this.getFromStorage('token');
-      if (!token) {
-        throw new Error('User not authenticated');
-      }
-
       const response = await fetch(this.apiBaseUrl + '/push/devices/' + this.deviceId, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
+        credentials: 'include', // Include authentication cookies
         body: JSON.stringify(settings)
       });
 
