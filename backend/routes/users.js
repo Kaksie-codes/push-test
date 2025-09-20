@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const Post = require('../models/Post');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -23,6 +24,19 @@ router.get('/all', optionalAuth, async (req, res) => {
 
     console.log('Found users:', allUsers.length);
 
+    // Get post counts for all users
+    const userIds = allUsers.map(user => user._id);
+    const postCounts = await Post.aggregate([
+      { $match: { authorId: { $in: userIds } } },
+      { $group: { _id: '$authorId', count: { $sum: 1 } } }
+    ]);
+    
+    // Create a map for quick lookup
+    const postCountMap = postCounts.reduce((map, item) => {
+      map[item._id.toString()] = item.count;
+      return map;
+    }, {});
+
     // Map users and add computed fields
     const users = allUsers.map(user => {
       const userObj = {
@@ -33,6 +47,7 @@ router.get('/all', optionalAuth, async (req, res) => {
         bio: user.bio,
         followerCount: user.followers ? user.followers.length : 0,
         followingCount: user.following ? user.following.length : 0,
+        postCount: postCountMap[user._id.toString()] || 0,
         createdAt: user.createdAt,
         isFollowing: false // Default to false
       };

@@ -15,6 +15,7 @@ interface User {
   bio: string;
   followerCount: number;
   followingCount: number;
+  postCount: number;
   isFollowing?: boolean;
   createdAt: string;
 }
@@ -24,6 +25,7 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set());
   const router = useRouter();
   const { user: currentUser } = useAuth();
 
@@ -70,6 +72,7 @@ export default function UsersPage() {
 
   const handleFollow = async (userId: string) => {
     try {
+      setFollowingUsers(prev => new Set(prev).add(userId));
       await usersAPI.followUser(userId);
       setUsers(users.map(user => 
         user._id === userId 
@@ -79,11 +82,18 @@ export default function UsersPage() {
       toast.success('User followed successfully!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to follow user');
+    } finally {
+      setFollowingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
   const handleUnfollow = async (userId: string) => {
     try {
+      setFollowingUsers(prev => new Set(prev).add(userId));
       await usersAPI.unfollowUser(userId);
       setUsers(users.map(user => 
         user._id === userId 
@@ -93,6 +103,12 @@ export default function UsersPage() {
       toast.success('User unfollowed successfully!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to unfollow user');
+    } finally {
+      setFollowingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
@@ -192,98 +208,139 @@ export default function UsersPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
             {users.map((user) => (
-              <div key={user._id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6">
-                {/* User Avatar and Basic Info */}
-                <div className="flex items-center mb-4">
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                  <div className="ml-3 flex-1">
+              <div key={user._id} className="group relative bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 overflow-hidden">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Card Content */}
+                <div className="relative p-6">
+                  {/* Header with Avatar and Status */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <img
+                          src={user.avatarUrl}
+                          alt={user.displayName}
+                          className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                        />
+                        {/* Online status indicator (could be dynamic) */}
+                        <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-green-400 border-2 border-white rounded-full"></div>
+                      </div>
+                      
+                      {/* Current user badge */}
+                      {currentUser && user._id === currentUser.id && (
+                        <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                          You
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Join date badge */}
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      {formatJoinDate(user.createdAt).split(',')[0]}
+                    </span>
+                  </div>
+
+                  {/* User Info */}
+                  <div className="mb-4">
                     <Link 
                       href={`/users/${user._id}`}
-                      className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                      className="group/link inline-block"
                     >
-                      {user.displayName}
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover/link:text-blue-600 transition-colors duration-200 mb-1">
+                        {user.displayName}
+                      </h3>
                     </Link>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <p className="text-sm text-gray-500 mb-2">{user.email}</p>
+                    
+                    {/* Bio */}
+                    {user.bio ? (
+                      <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                        {user.bio}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">No bio available</p>
+                    )}
                   </div>
-                </div>
 
-                {/* Bio */}
-                {user.bio && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {user.bio}
-                  </p>
-                )}
-
-                {/* Stats */}
-                <div className="flex justify-between text-sm text-gray-500 mb-4">
-                  <div className="text-center">
-                    <div className="font-medium text-gray-900">{user.followerCount}</div>
-                    <div>Followers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-medium text-gray-900">{user.followingCount}</div>
-                    <div>Following</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-medium text-gray-900">
-                      {formatJoinDate(user.createdAt).split(',')[0]}
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-1 mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{user.followerCount}</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">Followers</div>
                     </div>
-                    <div>Joined</div>
-                  </div>
-                </div>
-
-                {/* Join Date */}
-                <div className="text-xs text-gray-400 mb-4 text-center">
-                  Joined {formatJoinDate(user.createdAt)}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => router.push(`/users/${user._id}`)}
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    View Profile
-                  </Button>
-                  
-                  {/* Only show follow/unfollow buttons if not viewing own profile */}
-                  {currentUser && user._id !== currentUser.id && (
-                    <>
-                      {user.isFollowing ? (
-                        <Button
-                          onClick={() => handleUnfollow(user._id)}
-                          variant="secondary"
-                          size="sm"
-                          className="px-4"
-                        >
-                          Unfollow
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleFollow(user._id)}
-                          size="sm"
-                          className="px-4"
-                        >
-                          Follow
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  
-                  {/* Show "You" indicator for current user */}
-                  {currentUser && user._id === currentUser.id && (
-                    <div className="px-4 py-2 text-sm text-gray-500 bg-gray-100 rounded">
-                      You
+                    <div className="text-center border-x border-gray-200">
+                      <div className="text-lg font-bold text-gray-900">{user.followingCount}</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">Following</div>
                     </div>
-                  )}
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">
+                        {user.postCount || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">Posts</div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => router.push(`/users/${user._id}`)}
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1 group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-200 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Profile
+                    </Button>
+                    
+                    {/* Only show follow/unfollow buttons if not viewing own profile */}
+                    {currentUser && user._id !== currentUser.id && (
+                      <>
+                        {user.isFollowing ? (
+                          <Button
+                            onClick={() => handleUnfollow(user._id)}
+                            disabled={followingUsers.has(user._id)}
+                            variant="secondary"
+                            size="sm"
+                            className="px-4 text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
+                          >
+                            {followingUsers.has(user._id) ? (
+                              <svg className="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                              </svg>
+                            )}
+                            {followingUsers.has(user._id) ? 'Loading...' : 'Unfollow'}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleFollow(user._id)}
+                            disabled={followingUsers.has(user._id)}
+                            size="sm"
+                            className="px-4 bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          >
+                            {followingUsers.has(user._id) ? (
+                              <svg className="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                              </svg>
+                            )}
+                            {followingUsers.has(user._id) ? 'Loading...' : 'Follow'}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
