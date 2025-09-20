@@ -106,7 +106,10 @@ class HybridPushService {
 
       const message = {
         token,
-        notification: payload.notification,
+        notification: {
+          title: payload.notification.title,
+          body: payload.notification.body
+        },
         data: payload.data || {},
         webpush: {
           notification: {
