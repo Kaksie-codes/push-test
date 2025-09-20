@@ -126,6 +126,23 @@ export const postsAPI = {
 
 // Notifications API
 export const notificationsAPI = {
+  // In-app notifications
+  getNotifications: (page = 1, limit = 20) =>
+    api.get('/notifications', { params: { page, limit } }),
+  
+  markAsRead: (id: string) =>
+    api.patch(`/notifications/${id}/read`),
+  
+  markAllAsRead: () =>
+    api.patch('/notifications/mark-all-read'),
+  
+  deleteNotification: (id: string) =>
+    api.delete(`/notifications/${id}`),
+  
+  getUnreadCount: () =>
+    api.get('/notifications/unread-count'),
+  
+  // Notification settings (legacy)
   getSettings: () =>
     api.get('/notifications/settings'),
   

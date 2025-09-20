@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const Post = require('../models/Post');
 const User = require('../models/User');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
+const { createNotification } = require('./notifications');
 
 const router = express.Router();
 
@@ -52,7 +53,31 @@ router.post('/', authMiddleware, [
       post: postResponse
     });
 
-    // TODO: Send notifications to followers (will implement in notifications phase)
+    // Create notifications for followers
+    try {
+      const author = await User.findById(authorId);
+      if (author.followers && author.followers.length > 0) {
+        // Create notifications for all followers
+        const notificationPromises = author.followers.map(followerId =>
+          createNotification(
+            followerId,
+            authorId,
+            'new_post',
+            `${author.displayName} posted: "${text.length > 50 ? text.substring(0, 50) + '...' : text}"`,
+            post._id,
+            'Post'
+          ).catch(err => {
+            console.error(`Failed to create notification for follower ${followerId}:`, err);
+            return null; // Continue with other notifications even if one fails
+          })
+        );
+        
+        await Promise.allSettled(notificationPromises);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create post notifications:', notificationError);
+      // Don't fail the post creation if notification creation fails
+    }
   } catch (error) {
     console.error('Create post error:', error);
     res.status(500).json({ message: 'Server error' });

@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from './ui';
+import { notificationsAPI } from '../utils/api';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,6 +12,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -23,6 +25,39 @@ export const Layout = ({ children }: LayoutProps) => {
       router.events.off('routeChangeStart', handleRouteChange);
     };
   }, [router.events]);
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (user) {
+        try {
+          const response = await notificationsAPI.getUnreadCount();
+          setUnreadCount(response.data.count);
+        } catch (error) {
+          console.error('Failed to fetch unread count:', error);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+    
+    // Optionally, set up polling to check for new notifications
+    const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Clear unread count when user visits notifications page
+  useEffect(() => {
+    if (router.pathname === '/notifications' && unreadCount > 0) {
+      // Small delay to allow the notifications page to load and mark items as read
+      const timer = setTimeout(() => {
+        setUnreadCount(0);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [router.pathname, unreadCount]);
 
   const handleLogout = async () => {
     try {
@@ -39,6 +74,9 @@ export const Layout = ({ children }: LayoutProps) => {
     }
     if (path === '/users') {
       return router.pathname === '/users';
+    }
+    if (path === '/notifications') {
+      return router.pathname === '/notifications';
     }
     if (path.startsWith('/users/')) {
       return router.pathname.startsWith('/users/') && router.pathname !== '/users';
@@ -78,6 +116,14 @@ export const Layout = ({ children }: LayoutProps) => {
                 </a>
                 <a href="/users" className={getNavLinkClasses('/users')}>
                   Users
+                </a>
+                <a href="/notifications" className={`${getNavLinkClasses('/notifications')} relative`}>
+                  Notifications
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem]">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </a>
                 <a href={`/users/${user.id}`} className={getNavLinkClasses(`/users/${user.id}`)}>
                   Profile
@@ -157,6 +203,25 @@ export const Layout = ({ children }: LayoutProps) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                     </svg>
                     Users
+                  </div>
+                </a>
+                <a
+                  href="/notifications"
+                  className={`${getNavLinkClasses('/notifications')} block px-3 py-2 text-base font-medium transition-colors duration-150`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5v-12h5v12z" />
+                      </svg>
+                      Notifications
+                    </div>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem]">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </div>
                 </a>
                 <a

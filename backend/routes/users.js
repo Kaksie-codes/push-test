@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
+const { createNotification } = require('./notifications');
 
 const router = express.Router();
 
@@ -275,6 +276,21 @@ router.post('/:id/follow', authMiddleware, async (req, res) => {
     await User.findByIdAndUpdate(userToFollowId, {
       $addToSet: { followers: currentUserId }
     });
+
+    // Create notification for the followed user
+    try {
+      await createNotification(
+        userToFollowId,
+        currentUserId,
+        'follow',
+        `${currentUser.displayName} started following you`,
+        currentUserId,
+        'User'
+      );
+    } catch (notificationError) {
+      console.error('Failed to create follow notification:', notificationError);
+      // Don't fail the follow operation if notification creation fails
+    }
 
     res.json({ message: 'User followed successfully' });
   } catch (error) {
