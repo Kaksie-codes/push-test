@@ -16,18 +16,35 @@ try {
     
     // Handle background FCM messages
     messaging.onBackgroundMessage((payload) => {
-      console.log('Received background message:', payload);
+      console.log('Received background FCM message:', payload);
       
-      const notificationTitle = payload.notification?.title || 'New Notification';
+      // Extract notification data from FCM payload
+      const title = payload.notification?.title || payload.data?.title || 'New Notification';
+      const body = payload.notification?.body || payload.data?.body || 'You have a new notification';
+      const icon = payload.notification?.icon || payload.data?.icon || '/icon-192x192.png';
+      const badge = payload.notification?.badge || payload.data?.badge || '/badge-72x72.png';
+      
       const notificationOptions = {
-        body: payload.notification?.body || '',
-        icon: payload.notification?.icon || '/icon-192x192.png',
-        badge: payload.notification?.badge || '/badge-72x72.png',
+        body: body,
+        icon: icon,
+        badge: badge,
         data: payload.data || {},
-        actions: payload.notification?.actions || []
+        tag: 'post-notification',
+        requireInteraction: true, // Keep notification visible until user interacts
+        actions: [
+          {
+            action: 'view',
+            title: 'View Post'
+          },
+          {
+            action: 'dismiss',
+            title: 'Dismiss'
+          }
+        ]
       };
 
-      return self.registration.showNotification(notificationTitle, notificationOptions);
+      console.log('Showing FCM notification:', title, notificationOptions);
+      return self.registration.showNotification(title, notificationOptions);
     });
   }
 } catch (error) {
@@ -189,19 +206,37 @@ self.addEventListener('message', (event) => {
             isFirebaseInitialized = true;
             console.log('Firebase dynamically initialized in service worker');
             
-            // Set up background message handler
+            // Set up background message handler with proper formatting
             messaging.onBackgroundMessage((payload) => {
-              console.log('Received background message:', payload);
+              console.log('Received background FCM message (dynamic):', payload);
               
-              const notificationTitle = payload.notification?.title || 'New Notification';
+              // Extract notification data from FCM payload
+              const title = payload.notification?.title || payload.data?.title || 'New Notification';
+              const body = payload.notification?.body || payload.data?.body || 'You have a new notification';
+              const icon = payload.notification?.icon || payload.data?.icon || '/icon-192x192.png';
+              const badge = payload.notification?.badge || payload.data?.badge || '/badge-72x72.png';
+              
               const notificationOptions = {
-                body: payload.notification?.body || '',
-                icon: payload.notification?.icon || '/icon-192x192.png',
-                badge: payload.notification?.badge || '/badge-72x72.png',
-                data: payload.data || {}
+                body: body,
+                icon: icon,
+                badge: badge,
+                data: payload.data || {},
+                tag: 'post-notification',
+                requireInteraction: true, // Keep notification visible until user interacts
+                actions: [
+                  {
+                    action: 'view',
+                    title: 'View Post'
+                  },
+                  {
+                    action: 'dismiss',
+                    title: 'Dismiss'
+                  }
+                ]
               };
 
-              return self.registration.showNotification(notificationTitle, notificationOptions);
+              console.log('Showing FCM notification (dynamic):', title, notificationOptions);
+              return self.registration.showNotification(title, notificationOptions);
             });
             
             // Send success response
