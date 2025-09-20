@@ -10,6 +10,9 @@ class PushNotificationManager {
     this.serviceWorker = null;
     this.deviceId = null;
     
+    // Get API base URL from environment
+    this.apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    
     // Only initialize if we're in the browser
     if (typeof window !== 'undefined') {
       this.deviceId = this.generateDeviceId();
@@ -251,12 +254,15 @@ class PushNotificationManager {
         throw new Error('Failed to obtain any push subscription');
       }
 
-      // Send to backend
-      const response = await fetch('/api/push/subscribe', {
+      // Debug logging
+      console.log('🔍 API Base URL:', this.apiBaseUrl);
+      
+      // Send to backend (cookies will be sent automatically for auth)
+      const response = await fetch(`${this.apiBaseUrl}/push/subscribe`, {
         method: 'POST',
+        credentials: 'include', // Include cookies for authentication
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getFromStorage('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(subscriptionData)
       });
@@ -295,11 +301,11 @@ class PushNotificationManager {
   // Unsubscribe from push notifications
   async unsubscribe() {
     try {
-      const response = await fetch('/api/push/unsubscribe', {
+      const response = await fetch(`${this.apiBaseUrl}/push/unsubscribe`, {
         method: 'POST',
+        credentials: 'include', // Include cookies for authentication
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getFromStorage('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           deviceId: this.deviceId
@@ -330,10 +336,8 @@ class PushNotificationManager {
   // Check if user is subscribed
   async isSubscribed() {
     try {
-      const response = await fetch('/api/push/devices', {
-        headers: {
-          'Authorization': `Bearer ${this.getFromStorage('token')}`
-        }
+      const response = await fetch(`${this.apiBaseUrl}/push/devices`, {
+        credentials: 'include' // Include cookies for authentication
       });
 
       if (!response.ok) {
@@ -351,10 +355,8 @@ class PushNotificationManager {
   // Get user's registered devices
   async getDevices() {
     try {
-      const response = await fetch('/api/push/devices', {
-        headers: {
-          'Authorization': `Bearer ${this.getFromStorage('token')}`
-        }
+      const response = await fetch(`${this.apiBaseUrl}/push/devices`, {
+        credentials: 'include' // Include cookies for authentication
       });
 
       if (!response.ok) {
@@ -371,11 +373,11 @@ class PushNotificationManager {
   // Update device settings
   async updateDeviceSettings(settings) {
     try {
-      const response = await fetch(`/api/push/devices/${this.deviceId}`, {
+      const response = await fetch(`${this.apiBaseUrl}/push/devices/${this.deviceId}`, {
         method: 'PATCH',
+        credentials: 'include', // Include cookies for authentication
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getFromStorage('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(settings)
       });
