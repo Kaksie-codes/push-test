@@ -143,6 +143,12 @@ router.get('/feed', authMiddleware, async (req, res) => {
 router.get('/user/:userId', optionalAuth, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Validate ObjectId format
+    if (!userId || userId === 'undefined' || !userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+    
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;

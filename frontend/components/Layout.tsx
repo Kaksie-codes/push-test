@@ -78,7 +78,7 @@ export const Layout = ({ children }: LayoutProps) => {
     if (path === '/notifications') {
       return router.pathname === '/notifications';
     }
-    if (path.startsWith('/users/')) {
+    if (path.startsWith('/users/') && user?.id) {
       return router.pathname.startsWith('/users/') && router.pathname !== '/users';
     }
     return false;
@@ -125,9 +125,11 @@ export const Layout = ({ children }: LayoutProps) => {
                     </span>
                   )}
                 </a>
-                <a href={`/users/${user.id}`} className={getNavLinkClasses(`/users/${user.id}`)}>
-                  Profile
-                </a>
+                {user.id && (
+                  <a href={`/users/${user.id}`} className={getNavLinkClasses(`/users/${user.id}`)}>
+                    Profile
+                  </a>
+                )}
                 <Button
                   variant="secondary"
                   size="sm"
@@ -224,18 +226,20 @@ export const Layout = ({ children }: LayoutProps) => {
                     )}
                   </div>
                 </a>
-                <a
-                  href={`/users/${user.id}`}
-                  className={`${getNavLinkClasses(`/users/${user.id}`)} block px-3 py-2 text-base font-medium transition-colors duration-150`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Profile
-                  </div>
-                </a>
+                {user.id && (
+                  <a
+                    href={`/users/${user.id}`}
+                    className={`${getNavLinkClasses(`/users/${user.id}`)} block px-3 py-2 text-base font-medium transition-colors duration-150`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Profile
+                    </div>
+                  </a>
+                )}
                 <div className="px-3 py-2">
                   <Button
                     variant="secondary"

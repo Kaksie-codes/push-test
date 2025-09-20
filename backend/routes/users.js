@@ -121,7 +121,14 @@ router.get('/suggested', authMiddleware, async (req, res) => {
 // Get user profile by ID
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
+    const { id } = req.params;
+    
+    // Validate ObjectId format
+    if (!id || id === 'undefined' || !id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
+    const user = await User.findById(id)
       .select('-passwordHash -passwordResetToken -passwordResetExpires -devices')
       .populate('followers', 'displayName avatarUrl')
       .populate('following', 'displayName avatarUrl');
@@ -251,6 +258,11 @@ router.post('/:id/follow', authMiddleware, async (req, res) => {
     const userToFollowId = req.params.id;
     const currentUserId = req.user._id;
 
+    // Validate ObjectId format
+    if (!userToFollowId || userToFollowId === 'undefined' || !userToFollowId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
     // Can't follow yourself
     if (userToFollowId === currentUserId.toString()) {
       return res.status(400).json({ message: 'You cannot follow yourself' });
@@ -304,6 +316,11 @@ router.post('/:id/unfollow', authMiddleware, async (req, res) => {
   try {
     const userToUnfollowId = req.params.id;
     const currentUserId = req.user._id;
+
+    // Validate ObjectId format
+    if (!userToUnfollowId || userToUnfollowId === 'undefined' || !userToUnfollowId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
 
     // Can't unfollow yourself
     if (userToUnfollowId === currentUserId.toString()) {

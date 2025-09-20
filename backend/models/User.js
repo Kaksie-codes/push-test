@@ -126,12 +126,12 @@ userSchema.methods.removeDevice = function(deviceId) {
 
 // Get follower count
 userSchema.virtual('followerCount').get(function() {
-  return this.followers.length;
+  return this.followers ? this.followers.length : 0;
 });
 
 // Get following count
 userSchema.virtual('followingCount').get(function() {
-  return this.following.length;
+  return this.following ? this.following.length : 0;
 });
 
 // Ensure virtual fields are serialized
