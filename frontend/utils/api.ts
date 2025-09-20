@@ -31,7 +31,7 @@ api.interceptors.response.use(
       // Only redirect to login if we're not already on an auth page
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
-        const authPages = ['/login', '/register', '/verify-email', '/resend-verification'];
+        const authPages = ['/login', '/register', '/verify-email', '/resend-verification', '/forgot-password', '/reset-password'];
         
         // Don't redirect if we're already on an auth page
         if (!authPages.includes(currentPath)) {

@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from './ui';
 
@@ -8,6 +9,7 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
@@ -15,6 +17,28 @@ export const Layout = ({ children }: LayoutProps) => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  // Function to check if a path is active
+  const isActivePath = (path: string) => {
+    if (path === '/feed') {
+      return router.pathname === '/feed';
+    }
+    if (path.startsWith('/users/')) {
+      return router.pathname.startsWith('/users/');
+    }
+    return false;
+  };
+
+  // Function to get navigation link classes
+  const getNavLinkClasses = (path: string) => {
+    const baseClasses = "px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200";
+    const isActive = isActivePath(path);
+    
+    if (isActive) {
+      return `${baseClasses} bg-blue-100 text-blue-700 border border-blue-200`;
+    }
+    return `${baseClasses} text-gray-700 hover:text-gray-900 hover:bg-gray-100`;
   };
 
   return (
@@ -33,10 +57,10 @@ export const Layout = ({ children }: LayoutProps) => {
             {/* Navigation */}
             {user && (
               <nav className="flex items-center space-x-4">
-                <a href="/feed" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                <a href="/feed" className={getNavLinkClasses('/feed')}>
                   Feed
                 </a>
-                <a href={`/users/${user.id}`} className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                <a href={`/users/${user.id}`} className={getNavLinkClasses(`/users/${user.id}`)}>
                   Profile
                 </a>
                 <Button

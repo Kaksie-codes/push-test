@@ -151,6 +151,18 @@ The app is configured for manual deployment to Render:
 - `GET /api/feed` - Get feed
 - `POST /api/notifications/subscribe` - Subscribe to push notifications
 
+## 🚀 Deployment
+
+This application is designed to be deployed with:
+- **Frontend**: Vercel (recommended for Next.js)
+- **Backend**: Render (free tier available)
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+### Quick Deploy Links
+- [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Kaksie-codes/push-test&project-name=social-app-frontend&root-directory=frontend)
+- Deploy backend to [Render](https://render.com) using the `backend` directory
+
 ## Contributing
 
 1. Fork the repository

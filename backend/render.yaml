@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: social-app-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: social-app-db
+          property: connectionString
+    domains:
+      - your-backend-app.onrender.com
+
+databases:
+  - name: social-app-db
+    databaseName: social_app
+    user: admin
