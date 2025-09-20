@@ -223,7 +223,8 @@ export default function UsersPage() {
                         <img
                           src={user.avatarUrl}
                           alt={user.displayName}
-                          className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                          className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-sm cursor-pointer hover:ring-blue-300 transition-all duration-200"
+                          onClick={() => router.push(`/users/${user._id}`)}
                         />
                         {/* Online status indicator (could be dynamic) */}
                         <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-green-400 border-2 border-white rounded-full"></div>

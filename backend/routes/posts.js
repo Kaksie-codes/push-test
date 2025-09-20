@@ -35,10 +35,10 @@ router.post('/', authMiddleware, [
     await post.populate('authorId', 'displayName email avatarUrl');
 
     const postResponse = {
-      id: post._id,
+      _id: post._id,
       text: post.text,
       author: {
-        id: post.authorId._id,
+        _id: post.authorId._id,
         displayName: post.authorId.displayName,
         email: post.authorId.email,
         avatarUrl: post.authorId.avatarUrl
@@ -111,10 +111,10 @@ router.get('/feed', authMiddleware, async (req, res) => {
       const isLiked = post.isLikedBy(currentUser._id);
       
       return {
-        id: post._id,
+        _id: post._id,
         text: post.text,
         author: {
-          id: post.authorId._id,
+          _id: post.authorId._id,
           displayName: post.authorId.displayName,
           email: post.authorId.email,
           avatarUrl: post.authorId.avatarUrl
