@@ -78,7 +78,7 @@ router.post('/', authMiddleware, [
             follower._id,
             authorId,
             'new_post',
-            `${author.displayName} posted: "${text.length > 50 ? text.substring(0, 50) + '...' : text}"`,
+            `${author.displayName} made a post`,
             post._id,
             'Post'
           ).catch(err => {
@@ -93,8 +93,8 @@ router.post('/', authMiddleware, [
         if (followers.length > 0) {
           try {
             const pushPayload = {
-              title: `New post from ${author.displayName}`,
-              body: text.length > 100 ? text.substring(0, 100) + '...' : text,
+              title: `${author.displayName} made a post`,
+              body: `A new post is live! Check it before it's gone`,
               icon: author.avatarUrl || '/icon-192x192.png',
               badge: '/badge-72x72.png',
               data: {
