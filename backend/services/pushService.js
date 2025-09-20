@@ -125,7 +125,7 @@ class HybridPushService {
         apns: {
           headers: {
             'apns-priority': options.priority === 'high' ? '10' : '5',
-            'apns-expiration': Math.floor(Date.now() / 1000) + (options.ttl || 86400)
+            'apns-expiration': String(Math.floor(Date.now() / 1000) + (options.ttl || 86400))
           }
         }
       };
