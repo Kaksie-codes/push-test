@@ -158,7 +158,7 @@ const PushNotificationSettings = () => {
           <XCircleIcon className="h-8 w-8 text-red-500" />
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Push Notifications Not Supported</h3>
-            <p className="text-gray-600">Your browser doesn't support push notifications.</p>
+            <p className="text-gray-600">Your browser doesn&apos;t support push notifications.</p>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from './ui';
 import { notificationsAPI } from '../utils/api';
@@ -122,20 +123,20 @@ export const Layout = ({ children }: LayoutProps) => {
             {/* Desktop Navigation */}
             {user && (
               <nav className="hidden md:flex items-center space-x-4">
-                <a href="/feed" className={getNavLinkClasses('/feed')}>
+                <Link href="/feed" className={getNavLinkClasses('/feed')}>
                   Feed
-                </a>
-                <a href="/users" className={getNavLinkClasses('/users')}>
+                </Link>
+                <Link href="/users" className={getNavLinkClasses('/users')}>
                   Users
-                </a>
-                <a href="/notifications" className={`${getNavLinkClasses('/notifications')} relative`}>
+                </Link>
+                <Link href="/notifications" className={`${getNavLinkClasses('/notifications')} relative`}>
                   Notifications
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[1.25rem]">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
-                </a>
+                </Link>
                 {user.id && (
                   <a href={`/users/${user.id}`} className={getNavLinkClasses(`/users/${user.id}`)}>
                     Profile
@@ -194,7 +195,7 @@ export const Layout = ({ children }: LayoutProps) => {
           }`}>
             <div className="bg-white border-t border-gray-200 shadow-lg">
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a
+                <Link
                   href="/feed"
                   className={`${getNavLinkClasses('/feed')} block px-3 py-2 text-base font-medium transition-colors duration-150`}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -205,8 +206,8 @@ export const Layout = ({ children }: LayoutProps) => {
                     </svg>
                     Feed
                   </div>
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/users"
                   className={`${getNavLinkClasses('/users')} block px-3 py-2 text-base font-medium transition-colors duration-150`}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -217,8 +218,8 @@ export const Layout = ({ children }: LayoutProps) => {
                     </svg>
                     Users
                   </div>
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/notifications"
                   className={`${getNavLinkClasses('/notifications')} block px-3 py-2 text-base font-medium transition-colors duration-150`}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -236,7 +237,7 @@ export const Layout = ({ children }: LayoutProps) => {
                       </span>
                     )}
                   </div>
-                </a>
+                </Link>
                 {user.id && (
                   <a
                     href={`/users/${user.id}`}
