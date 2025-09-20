@@ -36,10 +36,7 @@ export const Layout = ({ children }: LayoutProps) => {
                 <a href="/feed" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                   Feed
                 </a>
-                <a href="/trending" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                  Trending
-                </a>
-                <a href={`/profile/${user.id}`} className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                <a href={`/users/${user.id}`} className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                   Profile
                 </a>
                 <Button

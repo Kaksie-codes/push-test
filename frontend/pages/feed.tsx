@@ -8,11 +8,12 @@ import toast from 'react-hot-toast';
 
 interface Post {
   _id: string;
-  content: string;
+  text: string;
   author: {
     _id: string;
     displayName: string;
     email: string;
+    avatarUrl: string;
   };
   createdAt: string;
 }
@@ -21,6 +22,7 @@ interface User {
   _id: string;
   displayName: string;
   email: string;
+  avatarUrl: string;
   followerCount: number;
   followingCount: number;
 }
@@ -186,23 +188,39 @@ export default function FeedPage() {
                   <div key={post._id} className="bg-white rounded-lg shadow-sm border p-6">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <span className="text-white font-medium">
-                            {post.author.displayName.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
+                        <button
+                          onClick={() => router.push(`/users/${post.author._id}`)}
+                          className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
+                        >
+                          {post.author.avatarUrl ? (
+                            <img
+                              src={post.author.avatarUrl}
+                              alt={post.author.displayName}
+                              className="h-10 w-10 rounded-full object-cover hover:opacity-80 transition-opacity"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                              <span className="text-white font-medium">
+                                {post.author.displayName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                        </button>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2">
-                          <h3 className="text-sm font-medium text-gray-900">
+                          <button
+                            onClick={() => router.push(`/users/${post.author._id}`)}
+                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors focus:outline-none focus:underline"
+                          >
                             {post.author.displayName}
-                          </h3>
+                          </button>
                           <span className="text-sm text-gray-500">
                             {formatDate(post.createdAt)}
                           </span>
                         </div>
                         <p className="mt-2 text-gray-800 whitespace-pre-wrap">
-                          {post.content}
+                          {post.text}
                         </p>
                       </div>
                     </div>
@@ -237,15 +255,31 @@ export default function FeedPage() {
                   {suggestedUsers.slice(0, 3).map((suggestedUser) => (
                     <div key={suggestedUser._id} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700">
-                            {suggestedUser.displayName.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
+                        <button
+                          onClick={() => router.push(`/users/${suggestedUser._id}`)}
+                          className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
+                        >
+                          {suggestedUser.avatarUrl ? (
+                            <img
+                              src={suggestedUser.avatarUrl}
+                              alt={suggestedUser.displayName}
+                              className="h-8 w-8 rounded-full object-cover hover:opacity-80 transition-opacity"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center hover:bg-gray-400 transition-colors">
+                              <span className="text-sm font-medium text-gray-700">
+                                {suggestedUser.displayName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                        </button>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <button
+                            onClick={() => router.push(`/users/${suggestedUser._id}`)}
+                            className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors text-left focus:outline-none focus:underline"
+                          >
                             {suggestedUser.displayName}
-                          </p>
+                          </button>
                           <p className="text-xs text-gray-500">
                             {suggestedUser.followerCount} followers
                           </p>

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { generateSVGAvatar } = require('../utils/avatar');
 
 const deviceSchema = new mongoose.Schema({
   deviceId: {
@@ -83,13 +84,20 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
+// Hash password before saving and generate avatar for new users
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('passwordHash')) return next();
-  
   try {
-    const salt = await bcrypt.genSalt(12);
-    this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+    // Hash password if modified
+    if (this.isModified('passwordHash')) {
+      const salt = await bcrypt.genSalt(12);
+      this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+    }
+    
+    // Generate avatar for new users if no avatar is set
+    if (this.isNew && !this.avatarUrl) {
+      this.avatarUrl = generateSVGAvatar(this.displayName, this.email);
+    }
+    
     next();
   } catch (error) {
     next(error);
