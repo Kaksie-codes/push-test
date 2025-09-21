@@ -134,8 +134,8 @@ export default function PostDetailsPage() {
               ...comment, 
               likeCount: response.data.likeCount,
               likes: response.data.isLiked 
-                ? [...comment.likes, user._id]
-                : comment.likes.filter(id => id !== user._id)
+                ? [...comment.likes, user.id]
+                : comment.likes.filter(id => id !== user.id)
             }
           : comment
       ));
@@ -231,7 +231,7 @@ export default function PostDetailsPage() {
         {/* Back button */}
         <div className="mb-6">
           <Button 
-            variant="outline" 
+            variant="secondary" 
             onClick={() => router.back()}
             className="flex items-center space-x-2"
           >
@@ -379,12 +379,12 @@ export default function PostDetailsPage() {
                         onClick={() => handleLikeComment(comment._id)}
                         disabled={!user || likeLoading.has(comment._id)}
                         className={`flex items-center space-x-1 text-sm transition-colors ${
-                          user && comment.likes.includes(user._id)
+                          user && comment.likes.includes(user.id)
                             ? 'text-red-600'
                             : 'text-gray-600 hover:text-red-600'
                         } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        <svg className="w-4 h-4" fill={user && comment.likes.includes(user._id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill={user && comment.likes.includes(user.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                         <span>{comment.likeCount}</span>
