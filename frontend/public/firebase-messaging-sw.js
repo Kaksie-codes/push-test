@@ -36,7 +36,7 @@ try {
       icon: icon,
       badge: badge,
       data: payload.data || {},
-      tag: 'fcm-notification',
+      tag: `fcm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique tag per notification
       requireInteraction: true,
       silent: false,
       actions: [
