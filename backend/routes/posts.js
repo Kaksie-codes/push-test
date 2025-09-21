@@ -176,6 +176,7 @@ router.get('/feed', authMiddleware, async (req, res) => {
           avatarUrl: post.authorId.avatarUrl
         },
         likeCount: post.likeCount,
+        commentCount: post.commentCount || 0,
         isLiked,
         createdAt: post.createdAt
       };
@@ -426,6 +427,117 @@ router.get('/trending/recent', optionalAuth, async (req, res) => {
     res.json({ posts: postsWithLikeStatus });
   } catch (error) {
     console.error('Get trending posts error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get a single post by ID
+router.get('/:postId', async (req, res) => {
+  try {
+    const { postId } = req.params;
+    
+    const post = await Post.findById(postId).populate('authorId', 'displayName email avatarUrl');
+    
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    let isLiked = false;
+    if (req.user) {
+      isLiked = post.likes.some(like => like.userId.toString() === req.user._id.toString());
+    }
+
+    const postResponse = {
+      _id: post._id,
+      text: post.text,
+      author: {
+        _id: post.authorId._id,
+        displayName: post.authorId.displayName,
+        email: post.authorId.email,
+        avatarUrl: post.authorId.avatarUrl
+      },
+      likeCount: post.likeCount,
+      commentCount: post.commentCount || 0,
+      isLiked,
+      createdAt: post.createdAt
+    };
+
+    res.json({
+      message: 'Post retrieved successfully',
+      post: postResponse
+    });
+  } catch (error) {
+    console.error('Get post error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Like/Unlike a post
+router.post('/:postId/like', authMiddleware, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user._id;
+
+    const post = await Post.findById(postId).populate('authorId', 'displayName');
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    const isLiked = post.likes.some(like => like.userId.toString() === userId.toString());
+
+    if (isLiked) {
+      // Unlike
+      post.likes = post.likes.filter(like => like.userId.toString() !== userId.toString());
+    } else {
+      // Like
+      post.likes.push({ userId });
+    }
+
+    await post.save();
+
+    res.json({
+      message: isLiked ? 'Post unliked' : 'Post liked',
+      isLiked: !isLiked,
+      likeCount: post.likeCount
+    });
+
+    // Create notification for like (but not unlike)
+    if (!isLiked && post.authorId._id.toString() !== userId.toString()) {
+      try {
+        const liker = await User.findById(userId);
+        await createNotification(
+          post.authorId._id,
+          userId,
+          'like',
+          `${liker.displayName} liked your post`,
+          post._id,
+          'Post'
+        );
+
+        // Send push notification
+        const postAuthor = await User.findById(post.authorId._id);
+        if (postAuthor && postAuthor.notificationSettings.likesOnMyPosts) {
+          const pushPayload = {
+            title: `${liker.displayName} liked your post`,
+            body: post.text.length > 50 ? post.text.substring(0, 47) + '...' : post.text,
+            icon: liker.avatarUrl || '/icon-192x192.png',
+            badge: '/badge-72x72.png',
+            data: {
+              type: 'like',
+              postId: post._id.toString(),
+              authorId: userId.toString(),
+              url: `/posts/${post._id}`
+            }
+          };
+
+          await pushService.sendToUser(postAuthor, pushPayload);
+        }
+      } catch (notificationError) {
+        console.error('Failed to create like notification:', notificationError);
+      }
+    }
+  } catch (error) {
+    console.error('Like post error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

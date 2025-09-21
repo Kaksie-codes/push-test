@@ -74,6 +74,18 @@ const userSchema = new mongoose.Schema({
     postsFromFollowed: {
       type: Boolean,
       default: true
+    },
+    likesOnMyPosts: {
+      type: Boolean,
+      default: true
+    },
+    commentsOnMyPosts: {
+      type: Boolean,
+      default: true
+    },
+    repliesToMyComments: {
+      type: Boolean,
+      default: true
     }
   },
   passwordResetToken: String,

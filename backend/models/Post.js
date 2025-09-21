@@ -37,6 +37,10 @@ const postSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  commentCount: {
+    type: Number,
+    default: 0
+  },
   isDeleted: {
     type: Boolean,
     default: false

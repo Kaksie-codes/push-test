@@ -159,4 +159,19 @@ export const notificationsAPI = {
     api.get('/notifications/devices'),
 };
 
+// Comments API
+export const commentsAPI = {
+  getComments: (postId: string, page = 1, limit = 20) =>
+    api.get(`/comments/post/${postId}?page=${page}&limit=${limit}`),
+  
+  createComment: (data: { postId: string; text: string; parentCommentId?: string }) =>
+    api.post('/comments', data),
+  
+  likeComment: (commentId: string) =>
+    api.post(`/comments/${commentId}/like`),
+  
+  deleteComment: (commentId: string) =>
+    api.delete(`/comments/${commentId}`),
+};
+
 export default api;

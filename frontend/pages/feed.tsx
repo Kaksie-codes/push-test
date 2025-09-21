@@ -15,6 +15,9 @@ interface Post {
     email: string;
     avatarUrl: string;
   };
+  likeCount: number;
+  commentCount: number;
+  isLiked: boolean;
   createdAt: string;
 }
 
@@ -32,6 +35,7 @@ export default function FeedPage() {
   const [newPost, setNewPost] = useState('');
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [liking, setLiking] = useState<Set<string>>(new Set());
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
   
   const { user, loading: authLoading } = useAuth();
@@ -102,6 +106,28 @@ export default function FeedPage() {
       toast.success('User followed successfully!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to follow user');
+    }
+  };
+
+  const handleLikePost = async (postId: string) => {
+    try {
+      setLiking(prev => new Set(prev).add(postId));
+      const response = await postsAPI.likePost(postId);
+      
+      setPosts(prev => prev.map(post => 
+        post._id === postId 
+          ? { ...post, isLiked: response.data.isLiked, likeCount: response.data.likeCount }
+          : post
+      ));
+    } catch (error: any) {
+      console.error('Failed to like post:', error);
+      toast.error('Failed to like post');
+    } finally {
+      setLiking(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
     }
   };
 
@@ -219,9 +245,43 @@ export default function FeedPage() {
                             {formatDate(post.createdAt)}
                           </span>
                         </div>
-                        <p className="mt-2 text-gray-800 whitespace-pre-wrap">
+                        <div 
+                          onClick={() => router.push(`/posts/${post._id}`)}
+                          className="mt-2 text-gray-800 whitespace-pre-wrap cursor-pointer hover:text-gray-900 transition-colors"
+                        >
                           {post.text}
-                        </p>
+                        </div>
+                        
+                        {/* Post actions */}
+                        <div className="flex items-center space-x-6 mt-4 pt-3 border-t border-gray-100">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLikePost(post._id);
+                            }}
+                            disabled={liking.has(post._id)}
+                            className={`flex items-center space-x-2 px-3 py-1 rounded-full transition-colors ${
+                              post.isLiked
+                                ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                                : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
+                            }`}
+                          >
+                            <svg className="w-5 h-5" fill={post.isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            <span className="text-sm font-medium">{post.likeCount}</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => router.push(`/posts/${post._id}`)}
+                            className="flex items-center space-x-2 px-3 py-1 rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span className="text-sm font-medium">{post.commentCount || 0}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
