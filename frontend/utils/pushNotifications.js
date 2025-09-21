@@ -395,19 +395,15 @@ class PushNotificationManager {
       onMessage(this.messaging, (payload) => {
         console.log('FCM message received in foreground:', payload);
         
-        if (payload.notification) {
-          const { title, body, icon } = payload.notification;
-          
-          if (Notification.permission === 'granted') {
-            new Notification(title || 'New notification', {
-              body: body || 'You have a new notification',
-              icon: icon || '/icon-192x192.png',
-              badge: '/icon-192x192.png',
-              tag: 'fcm-notification',
-              requireInteraction: true,
-              data: payload.data || {}
-            });
-          }
+        // Don't show notification in foreground - let service worker handle all notifications
+        // This prevents double notifications
+        
+        // Optionally, you can dispatch a custom event or update UI state here
+        // For example, refresh notifications list or show an in-app notification
+        if (payload.data) {
+          window.dispatchEvent(new CustomEvent('fcm-message', { 
+            detail: payload 
+          }));
         }
       });
       

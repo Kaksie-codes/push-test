@@ -280,7 +280,7 @@ const PushNotificationSettings = () => {
                       {getBrowserIcon(device.browser)} {device.browser} on {device.platform}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Last active: {new Date(device.lastActiveAt).toLocaleDateString()}
+                      Last active: {new Date(device.lastActiveAt).toLocaleString()}
                     </p>
                     <div className="flex items-center space-x-2 mt-1">
                       {device.hasFCM && (
