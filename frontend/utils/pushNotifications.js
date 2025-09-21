@@ -115,7 +115,7 @@ class PushNotificationManager {
 
       console.log('Ensuring service worker is ready...');
       
-      // Let Firebase handle everything - no timeouts or manual intervention
+      // Remove timeout - let service worker register naturally on mobile
       await navigator.serviceWorker.ready;
       
       console.log('Service worker registration ready');
@@ -205,8 +205,8 @@ class PushNotificationManager {
         throw new Error('Firebase initialization failed');
       }
 
-      // Don't explicitly register service worker - let Firebase handle it
-      // await this.registerServiceWorker();
+      // Skip manual service worker registration - let Firebase handle it
+      console.log('Skipping manual service worker registration - Firebase will handle it');
 
       const fcmToken = await this.getFCMToken();
       if (!fcmToken) {
