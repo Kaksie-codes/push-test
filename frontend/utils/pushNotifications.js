@@ -113,17 +113,10 @@ class PushNotificationManager {
         throw new Error('Service Worker not supported');
       }
 
-      console.log('Firebase will automatically register the service worker...');
+      console.log('Ensuring service worker is ready...');
       
-      // Simple timeout - works for all platforms
-      const readyPromise = navigator.serviceWorker.ready;
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Service worker registration timed out after 30 seconds'));
-        }, 30000);
-      });
-      
-      await Promise.race([readyPromise, timeoutPromise]);
+      // Let Firebase handle everything - no timeouts or manual intervention
+      await navigator.serviceWorker.ready;
       
       console.log('Service worker registration ready');
       return true;
@@ -142,18 +135,10 @@ class PushNotificationManager {
 
       console.log('Getting FCM token...');
       
-      // Simple 30 second timeout for all platforms
-      const tokenPromise = getToken(this.messaging, {
+      // FCM for web requires VAPID key for better security and reliability
+      const token = await getToken(this.messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
       });
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('FCM token request timed out after 30 seconds'));
-        }, 30000);
-      });
-      
-      const token = await Promise.race([tokenPromise, timeoutPromise]);
       
       if (token) {
         console.log('FCM token obtained successfully');
@@ -187,7 +172,7 @@ class PushNotificationManager {
         throw new Error('Notification permission was previously denied. Please enable notifications in your browser settings.');
       }
 
-      // Simple permission request without complex timeouts
+      // Just request permission - no timeout
       const permission = await Notification.requestPermission();
       console.log('Notification permission result:', permission);
       
@@ -220,7 +205,8 @@ class PushNotificationManager {
         throw new Error('Firebase initialization failed');
       }
 
-      await this.registerServiceWorker();
+      // Don't explicitly register service worker - let Firebase handle it
+      // await this.registerServiceWorker();
 
       const fcmToken = await this.getFCMToken();
       if (!fcmToken) {

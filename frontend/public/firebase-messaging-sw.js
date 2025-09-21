@@ -1,7 +1,7 @@
 // Firebase Cloud Messaging Service Worker
 // Import Firebase messaging for FCM support
-importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js');
 
 // Firebase configuration
 const FIREBASE_CONFIG = {
