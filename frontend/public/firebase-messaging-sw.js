@@ -77,12 +77,17 @@ self.addEventListener('notificationclick', (event) => {
   if (action === 'view' || !action) {
     const urlToOpen = data.url || '/feed';
     
+    console.log('Notification data:', data);
+    console.log('URL to open:', urlToOpen);
+    
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then((clientList) => {
+          console.log('Found clients:', clientList.length);
           for (const client of clientList) {
+            console.log('Client URL:', client.url);
             if (client.url.includes(self.location.origin) && 'focus' in client) {
-              console.log('Focusing existing window');
+              console.log('Focusing existing window and sending navigation message');
               return client.focus().then(() => {
                 return client.postMessage({
                   type: 'NAVIGATE',
@@ -91,7 +96,7 @@ self.addEventListener('notificationclick', (event) => {
               });
             }
           }
-          console.log('Opening new window');
+          console.log('Opening new window with URL:', urlToOpen);
           return clients.openWindow(urlToOpen);
         })
     );

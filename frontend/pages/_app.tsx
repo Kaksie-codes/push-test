@@ -11,13 +11,21 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     // Listen for navigation messages from service worker
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      const messageHandler = (event: MessageEvent) => {
+        console.log('Received message from service worker:', event.data);
         if (event.data && event.data.type === 'NAVIGATE') {
           const url = event.data.url;
-          console.log('Navigating from service worker message:', url);
+          console.log('Navigating from service worker message to:', url);
           router.push(url);
         }
-      });
+      };
+      
+      navigator.serviceWorker.addEventListener('message', messageHandler);
+      
+      // Cleanup
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', messageHandler);
+      };
     }
   }, [router]);
 
