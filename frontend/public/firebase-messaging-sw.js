@@ -31,11 +31,20 @@ try {
     const icon = payload.notification?.icon || payload.data?.icon || '/icon-192x192.png';
     const badge = payload.notification?.badge || payload.data?.badge || '/badge-72x72.png';
     
+    // Make sure to pass through all the data, especially the URL
+    const notificationData = {
+      ...payload.data,
+      url: payload.data?.url || '/feed', // Fallback to feed if no URL
+      type: payload.data?.type || 'notification',
+      postId: payload.data?.postId || '',
+      authorId: payload.data?.authorId || ''
+    };
+    
     const notificationOptions = {
       body: body,
       icon: icon,
       badge: badge,
-      data: payload.data || {},
+      data: notificationData, // Use the properly structured data
       tag: `fcm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique tag per notification
       requireInteraction: true,
       silent: false,
@@ -52,6 +61,7 @@ try {
     };
 
     console.log('Showing FCM notification:', title, notificationOptions);
+    console.log('Notification data URL:', notificationData.url);
     return self.registration.showNotification(title, notificationOptions);
   });
 } catch (error) {
@@ -75,10 +85,26 @@ self.addEventListener('notificationclick', (event) => {
   
   // Handle notification click
   if (action === 'view' || !action) {
-    const urlToOpen = data.url || '/feed';
+    // Get the URL from notification data
+    let urlToOpen = data.url;
+    
+    // If no URL in data, try to construct one from postId
+    if (!urlToOpen && data.postId) {
+      urlToOpen = `/posts/${data.postId}`;
+    }
+    
+    // Fallback to feed
+    if (!urlToOpen) {
+      urlToOpen = '/feed';
+    }
+    
+    // Ensure URL starts with / for relative paths
+    if (!urlToOpen.startsWith('/') && !urlToOpen.startsWith('http')) {
+      urlToOpen = '/' + urlToOpen;
+    }
     
     console.log('Notification data:', data);
-    console.log('URL to open:', urlToOpen);
+    console.log('Final URL to open:', urlToOpen);
     
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -96,8 +122,8 @@ self.addEventListener('notificationclick', (event) => {
               });
             }
           }
-          console.log('Opening new window with URL:', urlToOpen);
-          return clients.openWindow(urlToOpen);
+          console.log('Opening new window with URL:', `${self.location.origin}${urlToOpen}`);
+          return clients.openWindow(`${self.location.origin}${urlToOpen}`);
         })
     );
   }
