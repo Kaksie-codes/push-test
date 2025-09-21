@@ -34,7 +34,7 @@ try {
     // Make sure to pass through all the data, especially the URL
     const notificationData = {
       ...payload.data,
-      url: payload.data?.url || '/feed', // Fallback to feed if no URL
+      url: payload.data?.url || (payload.data?.postId ? `/posts/${payload.data.postId}` : '/feed'),
       type: payload.data?.type || 'notification',
       postId: payload.data?.postId || '',
       authorId: payload.data?.authorId || ''
@@ -44,9 +44,9 @@ try {
       body: body,
       icon: icon,
       badge: badge,
-      data: notificationData, // Use the properly structured data
-      tag: `fcm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique tag per notification
-      requireInteraction: true,
+      data: notificationData,
+      tag: `fcm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      requireInteraction: false, // Allow auto-dismiss on desktop
       silent: false,
       actions: [
         {
@@ -85,17 +85,15 @@ self.addEventListener('notificationclick', (event) => {
   
   // Handle notification click
   if (action === 'view' || !action) {
-    // Get the URL from notification data
-    let urlToOpen = data.url;
+    // Prioritize constructing URL from postId first
+    let urlToOpen;
     
-    // If no URL in data, try to construct one from postId
-    if (!urlToOpen && data.postId) {
+    if (data.postId) {
       urlToOpen = `/posts/${data.postId}`;
-    }
-    
-    // Fallback to feed
-    if (!urlToOpen) {
-      urlToOpen = '/feed';
+    } else if (data.url) {
+      urlToOpen = data.url;
+    } else {
+      urlToOpen = '/feed'; // Final fallback
     }
     
     // Ensure URL starts with / for relative paths
