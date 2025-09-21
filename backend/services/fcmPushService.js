@@ -32,7 +32,6 @@ class FCMPushService {
       const message = {
         token,
         // Data payload (always accessible in service worker)
-        // No 'notification' field to prevent automatic notification display
         data: {
           title: payload.title || '',
           body: payload.body || '',
@@ -43,7 +42,7 @@ class FCMPushService {
           postId: payload.data?.postId || '',
           authorId: payload.data?.authorId || ''
         },
-        // Web push specific configuration - no notification field to prevent duplicates
+        // Web push specific configuration
         webpush: {
           fcmOptions: {
             link: payload.data?.url || '/'
