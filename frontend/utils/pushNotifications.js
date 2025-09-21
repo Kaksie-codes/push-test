@@ -95,13 +95,6 @@ class PushNotificationManager {
     try {
       console.log('Initializing Firebase for FCM...');
       
-      // Add small delay for mobile browsers
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-        console.log('Mobile browser detected, adding initialization delay...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
       const app = initializeApp(firebaseConfig);
       this.messaging = getMessaging(app);
       
@@ -122,18 +115,12 @@ class PushNotificationManager {
 
       console.log('Firebase will automatically register the service worker...');
       
-      // Detect if on mobile and adjust timeout accordingly
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const timeout = isMobile ? 20000 : 10000; // 20 seconds for mobile, 10 for desktop
-      
-      console.log(`Waiting for service worker registration (${timeout/1000}s timeout for ${isMobile ? 'mobile' : 'desktop'})...`);
-      
-      // Add timeout for service worker readiness
+      // Simple timeout - works for all platforms
       const readyPromise = navigator.serviceWorker.ready;
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new Error(`Service worker registration timed out after ${timeout/1000} seconds`));
-        }, timeout);
+          reject(new Error('Service worker registration timed out after 30 seconds'));
+        }, 30000);
       });
       
       await Promise.race([readyPromise, timeoutPromise]);
@@ -155,21 +142,15 @@ class PushNotificationManager {
 
       console.log('Getting FCM token...');
       
-      // Detect if on mobile and adjust timeout accordingly
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const timeout = isMobile ? 30000 : 15000; // 30 seconds for mobile, 15 for desktop
-      
-      console.log(`Platform detected: ${isMobile ? 'Mobile' : 'Desktop'}, using ${timeout/1000}s timeout`);
-      
-      // Add timeout to prevent hanging
+      // Simple 30 second timeout for all platforms
       const tokenPromise = getToken(this.messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
       });
       
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new Error(`FCM token request timed out after ${timeout/1000} seconds`));
-        }, timeout);
+          reject(new Error('FCM token request timed out after 30 seconds'));
+        }, 30000);
       });
       
       const token = await Promise.race([tokenPromise, timeoutPromise]);
@@ -184,7 +165,7 @@ class PushNotificationManager {
       }
     } catch (error) {
       console.error('Failed to get FCM token:', error);
-      throw error; // Throw instead of returning null to propagate timeout errors
+      throw error;
     }
   }
 
@@ -206,21 +187,8 @@ class PushNotificationManager {
         throw new Error('Notification permission was previously denied. Please enable notifications in your browser settings.');
       }
 
-      // Detect if on mobile and adjust timeout accordingly
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const timeout = isMobile ? 20000 : 10000; // 20 seconds for mobile, 10 for desktop
-      
-      console.log(`Requesting permission with ${timeout/1000}s timeout for ${isMobile ? 'mobile' : 'desktop'}...`);
-
-      // Add timeout for permission request
-      const permissionPromise = Notification.requestPermission();
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(`Permission request timed out after ${timeout/1000} seconds`));
-        }, timeout);
-      });
-      
-      const permission = await Promise.race([permissionPromise, timeoutPromise]);
+      // Simple permission request without complex timeouts
+      const permission = await Notification.requestPermission();
       console.log('Notification permission result:', permission);
       
       if (permission !== 'granted') {
@@ -294,16 +262,12 @@ class PushNotificationManager {
 
       const subscriptionData = await this.initializeSubscription();
       
-      // Since we're using cookie-based authentication (withCredentials: true),
-      // we don't need to get a token from localStorage
-      // The authentication cookie will be automatically included
-
       const response = await fetch(this.apiBaseUrl + '/push/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // Include authentication cookies
+        credentials: 'include',
         body: JSON.stringify(subscriptionData)
       });
 
@@ -324,16 +288,6 @@ class PushNotificationManager {
       };
     } catch (error) {
       console.error('FCM subscription failed:', error);
-      
-      // For mobile, try one retry with longer delay
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile && !error.retried) {
-        console.log('Mobile device detected, attempting retry after delay...');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        error.retried = true;
-        return this.subscribe();
-      }
-      
       throw error;
     }
   }

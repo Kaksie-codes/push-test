@@ -77,32 +77,17 @@ const PushNotificationSettings = () => {
     } catch (error: any) {
       console.error('Push notification subscription error:', error);
       
-      // Detect if on mobile for better error messages
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      // Provide more specific error messages
+      // Simple, clear error messages
       let errorMessage = 'Failed to enable push notifications';
       
       if (error.message.includes('timeout')) {
-        errorMessage = isMobile 
-          ? 'Request timed out. Mobile networks can be slower - please ensure you have a stable connection and try again.'
-          : 'Request timed out. Please check your internet connection and try again.';
+        errorMessage = 'Request timed out. Please check your internet connection and try again.';
       } else if (error.message.includes('permission')) {
-        errorMessage = isMobile
-          ? 'Please enable notifications in your phone\'s browser settings and try again. You may need to refresh the page after enabling.'
-          : 'Please enable notifications in your browser settings and try again.';
+        errorMessage = 'Please enable notifications in your browser settings and refresh the page.';
       } else if (error.message.includes('not supported')) {
-        errorMessage = isMobile
-          ? 'Push notifications may not be fully supported in this mobile browser. Try using Chrome or Firefox on your phone.'
-          : 'Push notifications are not supported in this browser.';
-      } else if (error.message.includes('Firebase')) {
-        errorMessage = isMobile
-          ? 'Configuration error. Please ensure you have a stable internet connection and try again.'
-          : 'Firebase configuration error. Please try again later.';
+        errorMessage = 'Push notifications are not supported in this browser.';
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
-        errorMessage = isMobile
-          ? 'Network error. Please check your mobile data/WiFi connection and try again.'
-          : 'Network error. Please check your connection and try again.';
+        errorMessage = 'Network error. Please check your connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
       }
