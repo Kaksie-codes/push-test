@@ -96,7 +96,9 @@ class PushNotificationManager {
     let platform = 'web';
 
     // Browser detection - order matters! Check most specific first
-    if (userAgent.includes('Edg/') || userAgent.includes('Edge/')) {
+    if (userAgent.includes('Brave/') || (userAgent.includes('Chrome') && navigator.brave)) {
+      browser = 'brave';
+    } else if (userAgent.includes('Edg/') || userAgent.includes('Edge/')) {
       browser = 'edge';
     } else if (userAgent.includes('OPR/') || userAgent.includes('Opera')) {
       browser = 'opera';
@@ -220,6 +222,14 @@ class PushNotificationManager {
       
       if (browser === 'edge' && error.message.includes('messaging/failed-service-worker-registration')) {
         console.error('🔧 Edge service worker issue detected. Try refreshing the page.');
+      } else if (browser === 'brave') {
+        if (error.message.includes('Registration failed') || error.message.includes('push service error')) {
+          console.error('🔧 Brave privacy settings blocking push notifications. Please:');
+          console.error('1. Click the Brave shield icon (🛡️) in address bar');
+          console.error('2. Turn off "Block Scripts" for this site');
+          console.error('3. Ensure "Notifications" are allowed');
+          console.error('4. Refresh the page and try again');
+        }
       }
       
       throw error;
@@ -254,6 +264,9 @@ class PushNotificationManager {
             break;
           case 'safari':
             instructions = 'In Safari: Go to Safari menu → Preferences → Websites → Notifications → Find your site → Change to "Allow"';
+            break;
+          case 'brave':
+            instructions = 'In Brave: Click the Brave shield icon → Turn off "Block Scripts" → Click the padlock icon → Set "Notifications" to "Allow" → Refresh the page';
             break;
           case 'chrome':
           default:
