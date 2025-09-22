@@ -78,8 +78,6 @@ class PushNotificationManager {
       if (storedToken && isSubscribed && notificationPermission === 'granted') {
         console.log('FCM enabled: true');
         console.log('FCM Token:', storedToken);
-      } else if (notificationPermission === 'granted') {
-        console.log('FCM enabled: true (permission granted, but no stored token)');
       } else {
         console.log('FCM enabled: false (notifications not enabled)');
       }
