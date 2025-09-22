@@ -23,7 +23,7 @@ try {
   
   // Handle background FCM messages
   messaging.onBackgroundMessage((payload) => {
-    console.log('Received background FCM message:', payload);
+    console.log('Received background message:', payload);
     
     // Extract notification data from FCM payload
     const title = payload.notification?.title || payload.data?.title || 'New Notification';

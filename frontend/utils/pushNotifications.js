@@ -141,11 +141,13 @@ class PushNotificationManager {
       });
       
       if (token) {
-        console.log('FCM token obtained successfully');
+        console.log('FCM enabled: true');
+        console.log('FCM Token:', token);
         this.setToStorage('fcmToken', token);
         return token;
       } else {
-        console.log('No FCM token available');
+        console.log('FCM enabled: false');
+        console.log('No registration token available.');
         return null;
       }
     } catch (error) {
