@@ -133,6 +133,13 @@ class PushNotificationManager {
       const app = initializeApp(firebaseConfig);
       this.messaging = getMessaging(app);
       
+      // Edge may need explicit service worker registration
+      const { browser } = this.detectEnvironment();
+      if (browser === 'edge') {
+        console.log('Edge detected - ensuring service worker is properly registered...');
+        await this.registerServiceWorker();
+      }
+      
       this.isFirebaseInitialized = true;
       console.log('Firebase initialized successfully');
       return true;
@@ -150,8 +157,26 @@ class PushNotificationManager {
 
       console.log('Ensuring service worker is ready...');
       
-      // Remove timeout - let service worker register naturally on mobile
-      await navigator.serviceWorker.ready;
+      const { browser } = this.detectEnvironment();
+      
+      if (browser === 'edge') {
+        // Edge sometimes needs explicit registration
+        console.log('Registering service worker explicitly for Edge...');
+        try {
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            scope: '/'
+          });
+          console.log('Service worker registered for Edge:', registration);
+          await navigator.serviceWorker.ready;
+        } catch (swError) {
+          console.warn('Edge service worker registration warning:', swError);
+          // Fallback to ready check
+          await navigator.serviceWorker.ready;
+        }
+      } else {
+        // Other browsers - let Firebase handle it or use ready
+        await navigator.serviceWorker.ready;
+      }
       
       console.log('Service worker registration ready');
       return true;
@@ -170,6 +195,8 @@ class PushNotificationManager {
 
       console.log('Getting FCM token...');
       
+      const { browser } = this.detectEnvironment();
+      
       // FCM for web requires VAPID key for better security and reliability
       const token = await getToken(this.messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
@@ -178,15 +205,23 @@ class PushNotificationManager {
       if (token) {
         console.log('FCM enabled: true');
         console.log('FCM Token:', token);
+        console.log(`✅ Token obtained successfully on ${browser}`);
         this.setToStorage('fcmToken', token);
         return token;
       } else {
         console.log('FCM enabled: false');
         console.log('No registration token available.');
+        console.log(`⚠️  No token available on ${browser} - check notification permissions`);
         return null;
       }
     } catch (error) {
-      console.error('Failed to get FCM token:', error);
+      const { browser } = this.detectEnvironment();
+      console.error(`❌ Failed to get FCM token on ${browser}:`, error);
+      
+      if (browser === 'edge' && error.message.includes('messaging/failed-service-worker-registration')) {
+        console.error('🔧 Edge service worker issue detected. Try refreshing the page.');
+      }
+      
       throw error;
     }
   }
