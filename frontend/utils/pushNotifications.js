@@ -95,15 +95,29 @@ class PushNotificationManager {
     let browser = 'other';
     let platform = 'web';
 
-    if (userAgent.includes('Chrome') && !userAgent.includes('Edge')) browser = 'chrome';
-    else if (userAgent.includes('Firefox')) browser = 'firefox';
-    else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) browser = 'safari';
-    else if (userAgent.includes('Edge')) browser = 'edge';
+    // Browser detection - order matters! Check most specific first
+    if (userAgent.includes('Edg/') || userAgent.includes('Edge/')) {
+      browser = 'edge';
+    } else if (userAgent.includes('OPR/') || userAgent.includes('Opera')) {
+      browser = 'opera';
+    } else if (userAgent.includes('Firefox/')) {
+      browser = 'firefox';
+    } else if (userAgent.includes('Safari/') && !userAgent.includes('Chrome')) {
+      browser = 'safari';
+    } else if (userAgent.includes('Chrome/')) {
+      browser = 'chrome';
+    } else if (userAgent.includes('Phoenix')) {
+      browser = 'phoenix';
+    }
 
+    // Platform detection
     if (userAgent.includes('Macintosh') || userAgent.includes('Mac OS X')) platform = 'mac';
     else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) platform = 'ios';
     else if (userAgent.includes('Android')) platform = 'android';
     else if (userAgent.includes('Windows')) platform = 'windows';
+    else if (userAgent.includes('Linux')) platform = 'linux';
+
+    console.log('🌐 Environment detected:', { browser, platform, userAgent: userAgent.substring(0, 100) + '...' });
 
     return { browser, platform };
   }
