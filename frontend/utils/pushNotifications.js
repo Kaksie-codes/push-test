@@ -51,15 +51,13 @@ class PushNotificationManager {
       this.isSupported = (
         'serviceWorker' in navigator &&
         'PushManager' in window &&
-        'Notification' in window &&
-        firebase !== undefined
+        'Notification' in window
       );
       
       console.log('FCM support check:', {
         serviceWorker: 'serviceWorker' in navigator,
         pushManager: 'PushManager' in window,
         notification: 'Notification' in window,
-        firebase: typeof firebase !== 'undefined',
         overall: this.isSupported
       });
       
