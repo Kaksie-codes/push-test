@@ -206,7 +206,26 @@ class PushNotificationManager {
 
       if (Notification.permission === 'denied') {
         console.log('Notification permission denied');
-        throw new Error('Notification permission was previously denied. Please enable notifications in your browser settings.');
+        
+        const { browser } = this.detectEnvironment();
+        let instructions = '';
+        
+        switch (browser) {
+          case 'firefox':
+            instructions = 'In Firefox: Click the padlock icon in the address bar → Find "Notifications" → Change from "Blocked" to "Allow" → Refresh the page';
+            break;
+          case 'edge':
+            instructions = 'In Edge: Click the padlock icon in the address bar → Click "Notifications" → Select "Allow" → Refresh the page';
+            break;
+          case 'safari':
+            instructions = 'In Safari: Go to Safari menu → Preferences → Websites → Notifications → Find your site → Change to "Allow"';
+            break;
+          case 'chrome':
+          default:
+            instructions = 'In Chrome: Click the padlock icon in the address bar → Click "Notifications" → Select "Allow" → Refresh the page';
+        }
+        
+        throw new Error(`Notification permission was previously denied. ${instructions}`);
       }
 
       // Just request permission - no timeout
