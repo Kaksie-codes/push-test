@@ -15,6 +15,8 @@ class PushNotificationManager {
     if (typeof window !== 'undefined') {
       this.deviceId = this.generateDeviceId();
       this.checkSupport();
+      // Check and display FCM token on app load if already enabled
+      this.checkAndDisplayFCMToken();
     }
   }
 
@@ -48,20 +50,43 @@ class PushNotificationManager {
     try {
       this.isSupported = (
         'serviceWorker' in navigator &&
-        'Notification' in window
+        'PushManager' in window &&
+        'Notification' in window &&
+        firebase !== undefined
       );
       
-      if (!this.isSupported) {
-        console.log('FCM is not supported in this browser');
-        return false;
-      }
-
-      console.log('FCM support detected');
+      console.log('FCM support check:', {
+        serviceWorker: 'serviceWorker' in navigator,
+        pushManager: 'PushManager' in window,
+        notification: 'Notification' in window,
+        firebase: typeof firebase !== 'undefined',
+        overall: this.isSupported
+      });
+      
       return true;
     } catch (error) {
       console.error('Error checking FCM support:', error);
       this.isSupported = false;
       return false;
+    }
+  }
+
+  checkAndDisplayFCMToken() {
+    try {
+      const storedToken = this.getFromStorage('fcmToken');
+      const isSubscribed = this.getFromStorage('pushSubscribed') === 'true';
+      const notificationPermission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+      
+      if (storedToken && isSubscribed && notificationPermission === 'granted') {
+        console.log('FCM enabled: true');
+        console.log('FCM Token:', storedToken);
+      } else if (notificationPermission === 'granted') {
+        console.log('FCM enabled: true (permission granted, but no stored token)');
+      } else {
+        console.log('FCM enabled: false (notifications not enabled)');
+      }
+    } catch (error) {
+      console.error('Error checking FCM token:', error);
     }
   }
 
