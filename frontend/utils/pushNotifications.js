@@ -48,16 +48,53 @@ class PushNotificationManager {
 
   checkSupport() {
     try {
-      this.isSupported = (
+      const { browser, platform } = this.detectEnvironment();
+      
+      // Basic FCM support requirements
+      const hasBasicSupport = (
         'serviceWorker' in navigator &&
         'PushManager' in window &&
         'Notification' in window
       );
+
+      // iOS/Safari specific checks
+      let iOSSupported = true;
+      let safariVersion = null;
+      
+      if (platform === 'ios' || browser === 'safari') {
+        // Check for HTTPS requirement
+        const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+        if (!isHTTPS) {
+          console.warn('⚠️ iOS/Safari requires HTTPS for push notifications');
+          iOSSupported = false;
+        }
+        
+        // Check Safari version for FCM compatibility
+        const userAgent = navigator.userAgent;
+        const safariMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+        if (safariMatch) {
+          const majorVersion = parseInt(safariMatch[1]);
+          safariVersion = `${majorVersion}.${safariMatch[2]}`;
+          
+          // Safari 16.4+ (iOS 16.4+, macOS 13.3+) has better FCM support
+          if (majorVersion < 16 || (majorVersion === 16 && parseInt(safariMatch[2]) < 4)) {
+            console.warn(`⚠️ Safari ${safariVersion} has limited FCM support. Upgrade to Safari 16.4+ for best experience`);
+            // Don't block, but warn
+          }
+        }
+      }
+
+      this.isSupported = hasBasicSupport && iOSSupported;
       
       console.log('FCM support check:', {
         serviceWorker: 'serviceWorker' in navigator,
         pushManager: 'PushManager' in window,
         notification: 'Notification' in window,
+        platform,
+        browser,
+        safariVersion,
+        isHTTPS: location.protocol === 'https:' || location.hostname === 'localhost',
+        iOSSupported,
         overall: this.isSupported
       });
       
@@ -159,7 +196,7 @@ class PushNotificationManager {
 
       console.log('Ensuring service worker is ready...');
       
-      const { browser } = this.detectEnvironment();
+      const { browser, platform } = this.detectEnvironment();
       
       if (browser === 'edge') {
         // Edge sometimes needs explicit registration
@@ -173,6 +210,23 @@ class PushNotificationManager {
         } catch (swError) {
           console.warn('Edge service worker registration warning:', swError);
           // Fallback to ready check
+          await navigator.serviceWorker.ready;
+        }
+      } else if (platform === 'ios' || browser === 'safari') {
+        // iOS Safari specific service worker handling
+        console.log('🍎 Registering service worker for iOS/Safari...');
+        try {
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            scope: '/',
+            updateViaCache: 'none' // iOS Safari specific
+          });
+          console.log('Service worker registered for iOS/Safari:', registration);
+          
+          // Wait for service worker to be fully ready on iOS
+          await navigator.serviceWorker.ready;
+          console.log('🍎 iOS/Safari service worker ready');
+        } catch (swError) {
+          console.warn('iOS Safari service worker registration warning:', swError);
           await navigator.serviceWorker.ready;
         }
       } else {
@@ -197,7 +251,21 @@ class PushNotificationManager {
 
       console.log('Getting FCM token...');
       
-      const { browser } = this.detectEnvironment();
+      const { browser, platform } = this.detectEnvironment();
+      
+      // iOS/Safari specific handling
+      if (platform === 'ios' || browser === 'safari') {
+        console.log('🍎 Getting FCM token for iOS/Safari...');
+        
+        // Ensure we have proper permissions first
+        if (Notification.permission !== 'granted') {
+          console.warn('iOS Safari: Notification permission not granted');
+          return null;
+        }
+        
+        // Add extra delay for iOS Safari to ensure service worker is ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       // FCM for web requires VAPID key for better security and reliability
       const token = await getToken(this.messaging, {
@@ -207,7 +275,7 @@ class PushNotificationManager {
       if (token) {
         console.log('FCM enabled: true');
         console.log('FCM Token:', token);
-        console.log(`✅ Token obtained successfully on ${browser}`);
+        console.log(`✅ Token obtained successfully on ${browser} (${platform})`);
         this.setToStorage('fcmToken', token);
         return token;
       } else {
@@ -252,7 +320,7 @@ class PushNotificationManager {
       if (Notification.permission === 'denied') {
         console.log('Notification permission denied');
         
-        const { browser } = this.detectEnvironment();
+        const { browser, platform } = this.detectEnvironment();
         let instructions = '';
         
         switch (browser) {
@@ -263,7 +331,11 @@ class PushNotificationManager {
             instructions = 'In Edge: Click the padlock icon in the address bar → Click "Notifications" → Select "Allow" → Refresh the page';
             break;
           case 'safari':
-            instructions = 'In Safari: Go to Safari menu → Preferences → Websites → Notifications → Find your site → Change to "Allow"';
+            if (platform === 'ios') {
+              instructions = 'On iPhone/iPad: Go to Settings → Safari → Advanced → Website Data → Find your site → Swipe left → Delete. Then revisit the site and allow notifications when prompted.';
+            } else {
+              instructions = 'In Safari: Go to Safari menu → Settings → Websites → Notifications → Find your site → Change to "Allow"';
+            }
             break;
           case 'brave':
             instructions = 'In Brave: Click the Brave shield icon → Turn off "Block Scripts" → Click the padlock icon → Set "Notifications" to "Allow" → Refresh the page';
@@ -276,12 +348,36 @@ class PushNotificationManager {
         throw new Error(`Notification permission was previously denied. ${instructions}`);
       }
 
-      // Just request permission - no timeout
-      const permission = await Notification.requestPermission();
+      // iOS/Safari specific permission handling
+      const { browser, platform } = this.detectEnvironment();
+      let permission;
+      
+      if (platform === 'ios' || browser === 'safari') {
+        // iOS Safari requires user gesture and has different behavior
+        console.log('🍎 Requesting permission for iOS/Safari...');
+        
+        // For iOS Safari, we need to be extra careful about user gesture
+        try {
+          permission = await Notification.requestPermission();
+        } catch (error) {
+          console.error('iOS Safari permission request failed:', error);
+          throw new Error('iOS Safari requires user interaction to enable notifications. Please tap the button again.');
+        }
+      } else {
+        // Standard permission request for other browsers
+        permission = await Notification.requestPermission();
+      }
+      
       console.log('Notification permission result:', permission);
       
       if (permission !== 'granted') {
-        throw new Error(`Notification permission ${permission}. Please enable notifications to receive push notifications.`);
+        let message = `Notification permission ${permission}. Please enable notifications to receive push notifications.`;
+        
+        if (platform === 'ios') {
+          message += ' On iOS, you may need to enable notifications in Safari settings if the prompt didn\'t appear.';
+        }
+        
+        throw new Error(message);
       }
       
       return permission;
@@ -295,8 +391,27 @@ class PushNotificationManager {
     try {
       console.log('Starting FCM subscription process...');
 
+      const { browser, platform } = this.detectEnvironment();
+      
+      // iOS/Safari specific pre-checks and guidance
+      if (platform === 'ios' || browser === 'safari') {
+        console.log('🍎 Setting up push notifications for iOS/Safari...');
+        
+        // Check HTTPS requirement
+        const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+        if (!isSecure) {
+          throw new Error('🍎 iOS/Safari requires HTTPS for push notifications. Please use HTTPS or localhost.');
+        }
+        
+        console.log('🍎 HTTPS requirement satisfied');
+        console.log('🍎 Note: iOS notifications may take a moment to appear and work best when the site is added to Home Screen');
+      }
+
       if (!this.checkSupport()) {
-        throw new Error('FCM not supported');
+        const supportMessage = platform === 'ios' 
+          ? 'FCM not supported. Ensure you\'re using Safari 16.4+ and have enabled notifications in Settings → Safari → Advanced.'
+          : 'FCM not supported';
+        throw new Error(supportMessage);
       }
 
       const permission = await this.requestPermission();
@@ -316,8 +431,6 @@ class PushNotificationManager {
       if (!fcmToken) {
         throw new Error('Failed to get FCM token');
       }
-
-      const { browser, platform } = this.detectEnvironment();
 
       const subscriptionData = {
         deviceId: this.deviceId,
@@ -528,6 +641,59 @@ class PushNotificationManager {
       subscribed: this.getFromStorage('pushSubscribed'),
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
     };
+  }
+
+  getiOSSetupInstructions() {
+    return {
+      requirements: [
+        "📱 iOS 16.4+ or Safari 16.4+ for best compatibility",
+        "🔒 HTTPS connection (required for iOS push notifications)", 
+        "🏠 Consider adding the site to Home Screen for better reliability",
+        "⚙️ Enable notifications in device Settings if prompted"
+      ],
+      troubleshooting: [
+        "If notifications don't appear: Check Settings → Safari → Advanced → Website Data",
+        "Clear website data and try again if having issues",
+        "Make sure the site isn't in Private Browsing mode",
+        "iOS Safari may delay showing notifications - this is normal behavior"
+      ],
+      limitations: [
+        "iOS notifications may not show immediately like on other platforms",
+        "Background sync may be limited compared to desktop browsers", 
+        "Some FCM features may not work identically to Android/Chrome"
+      ]
+    };
+  }
+
+  // Test function specifically for iOS debugging
+  async testiOSNotifications() {
+    const { platform, browser } = this.detectEnvironment();
+    
+    if (platform !== 'ios' && browser !== 'safari') {
+      console.log('This test is designed for iOS/Safari');
+      return;
+    }
+    
+    console.log('🍎 Testing iOS notification system...');
+    console.log('Environment:', { platform, browser });
+    console.log('Location protocol:', location.protocol);
+    console.log('Notification permission:', Notification.permission);
+    console.log('FCM support:', this.isSupported);
+    
+    if (this.isSupported && Notification.permission === 'granted') {
+      try {
+        // Test basic notification
+        new Notification('iOS Test', {
+          body: 'If you see this, basic notifications work!',
+          icon: '/icon-192x192.png'
+        });
+        console.log('✅ Basic notification test sent');
+      } catch (error) {
+        console.error('❌ Basic notification test failed:', error);
+      }
+    }
+    
+    return this.getiOSSetupInstructions();
   }
 }
 
